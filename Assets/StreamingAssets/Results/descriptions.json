@@ -1,0 +1,7 @@
+{
+  "grades": [
+    { "grade": "A+", "description": "Excellent work! Your choices show a strong understanding of carbon reduction." },
+    { "grade": "B+", "description": "Good work! Keep exploring opportunities to improve your carbon reduction decisions." },
+    { "grade": "C+", "description": "Keep learning! Review the scenarios and try again to strengthen your carbon reduction decisions." }
+  ]
+}

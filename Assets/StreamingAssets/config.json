@@ -1,0 +1,13 @@
+{
+  "questionWaitTime": 60,
+  "tutorialVideos": [
+    "Tutorials/0.mp4",
+    "Tutorials/1.mp4",
+    "Tutorials/2.mp4",
+    "Tutorials/3.mp4",
+    "Tutorials/4.mp4",
+    "Tutorials/5.mp4",
+    "Tutorials/6.mp4"
+  ],
+  "resultVideos": ["Results/0.mp4", "Results/1.mp4", "Results/2.mp4"]
+}

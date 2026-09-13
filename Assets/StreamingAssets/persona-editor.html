@@ -1,0 +1,1125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carbon Stories Persona Editor</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d0d0d;
+      --panel: #171717;
+      --panel-2: #202020;
+      --line: #353535;
+      --text: #f2f2f2;
+      --muted: #a8a8a8;
+      --accent: #d97757;
+      --danger: #ff8b8b;
+      --shadow: 0 18px 55px rgb(0 0 0 / 24%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 10% 0%, rgb(217 119 87 / 18%), transparent 36rem),
+        var(--bg);
+      color: var(--text);
+      font: 15px/1.45 Inter, system-ui, sans-serif;
+    }
+
+    button, input, textarea { font: inherit; }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 13px;
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    button:hover { border-color: var(--accent); }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    button.primary { background: var(--accent); color: #17100d; border-color: var(--accent); font-weight: 700; }
+    button.danger { color: var(--danger); }
+    button.loaded { background: rgb(74 222 128 / 14%); border-color: #54b978; color: #b8f5cc; }
+
+    header {
+      position: sticky;
+      z-index: 10;
+      top: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      align-items: center;
+      flex-direction: row;
+      justify-content: space-between;
+      padding: 18px clamp(18px, 4vw, 52px);
+      border-bottom: 1px solid var(--line);
+      background: rgb(13 13 13 / 92%);
+      backdrop-filter: blur(16px);
+    }
+
+    .header-status {
+      display: flex;
+      flex: 1 1 360px;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    h1 { margin: 0; font-size: clamp(20px, 3vw, 28px); }
+    header p { margin: 3px 0 0; color: var(--muted); }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
+
+    main { width: min(1440px, calc(100% - 40px)); margin: 26px auto 80px; }
+
+    .notice {
+      max-width: 620px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .notice.success { color: #f0b49e; }
+    .notice.error { color: #ffb6b6; }
+
+    .tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; }
+    .tab.active { color: #17100d; background: var(--accent); border-color: var(--accent); font-weight: 700; }
+    .tab.dirty::after { content: " •"; color: #ffcf66; }
+
+    .overview {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin: 6px 0 22px;
+    }
+
+    .metric {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+    }
+
+    .metric-label { color: var(--muted); font-size: 13px; }
+    .metric-value { font-size: 20px; font-weight: 700; }
+
+    .persona-profile, .intro-pages {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 6px 0 14px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel);
+    }
+
+    .persona-profile label { margin: 0; }
+
+    .content-block { margin: 0 0 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); overflow: hidden; }
+    .block-toggle { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; border: 0; border-radius: 0; background: var(--panel); text-align: left; }
+    .block-toggle:hover, .block-toggle[aria-expanded="true"] { background: var(--panel-2); }
+    .block-title { font-size: 17px; font-weight: 750; }
+    .block-summary { color: var(--muted); font-size: 13px; font-weight: 400; }
+    .chevron { color: var(--accent); font-size: 18px; transition: transform .18s ease; }
+    .block-toggle[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+    .block-content { padding: 18px; border-top: 1px solid var(--line); }
+    .block-content[hidden] { display: none; }
+    .intro-pages { grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 0; border: 0; background: transparent; }
+    .intro-page { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel-2); }
+    .intro-page h3 { margin: 0 0 14px; }
+    .tutorial-field { margin: 0; }
+    .tutorial-field textarea { min-height: 180px; }
+    .scenario-picker { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+    .scenario-picker button { min-width: 42px; }
+    .scenario-picker button.active { color: #17100d; background: var(--accent); border-color: var(--accent); font-weight: 800; }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 6px 0 18px;
+    }
+
+    .toolbar h2 { margin: 0; font-size: 20px; }
+    #scenarioList { display: grid; gap: 18px; }
+
+    .scenario {
+      padding: clamp(18px, 2.5vw, 28px);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .scenario-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 22px; }
+    .scenario-head h3 { margin: 2px 0 0; font-size: 21px; }
+    .eyebrow { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .scenario-status { display: inline-flex; margin-left: 9px; padding: 3px 8px; border-radius: 999px; background: #292929; color: var(--muted); font-size: 11px; vertical-align: middle; }
+    .scenario-status.ready { background: rgb(217 119 87 / 16%); color: #f0b49e; }
+
+    .section-heading { margin: 24px 0 12px; }
+    .section-heading h4 { margin: 0; font-size: 16px; }
+    .section-heading p { margin: 3px 0 0; color: var(--muted); font-size: 13px; }
+
+    .scenario-fields {
+      display: grid;
+      grid-template-columns: 140px minmax(0, 1fr);
+      grid-template-areas:
+        "number question"
+        "hint hint";
+      gap: 14px 16px;
+    }
+
+    .scenario-number { grid-area: number; }
+    .scenario-question { grid-area: question; }
+    .scenario-hint { grid-area: hint; }
+    .scenario-question textarea { min-height: 118px; }
+    .scenario-hint textarea { min-height: 132px; }
+
+    .options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+
+    .option {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel-2);
+    }
+
+    .option h4 { margin: 0 0 16px; color: var(--text); font-size: 16px; }
+    .option-kicker { margin-bottom: 14px; color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .score-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; padding-top: 12px; border-top: 1px solid var(--line); }
+    label { display: grid; align-content: start; gap: 6px; margin-bottom: 13px; color: var(--muted); font-size: 13px; font-weight: 600; }
+
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 11px;
+      background: #111111;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus, textarea:focus { border-color: var(--accent); }
+    textarea { min-height: 82px; resize: vertical; line-height: 1.55; overflow-y: hidden; }
+    .option-description textarea { min-height: 112px; }
+    .option-response textarea { min-height: 138px; }
+    input[type="color"] { height: 40px; padding: 4px; }
+    .empty { padding: 50px 20px; text-align: center; border: 1px dashed var(--line); border-radius: 16px; color: var(--muted); }
+    .file-note { margin: -4px 0 0; font-size: 12px; color: var(--muted); }
+    .asset-preview { display: grid; gap: 9px; margin-top: 2px; }
+    .asset-preview img, .asset-preview video { width: 100%; height: 150px; border: 1px solid var(--line); border-radius: 9px; background: #0b0b0b; object-fit: contain; }
+    .asset-preview-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .asset-state { color: var(--muted); font-size: 12px; font-weight: 400; overflow-wrap: anywhere; }
+
+    @media (max-width: 880px) {
+      .actions { justify-content: flex-start; }
+      .header-status { flex-basis: 100%; justify-content: space-between; }
+      .notice { text-align: left; }
+      .overview { grid-template-columns: 1fr; }
+      .persona-profile { grid-template-columns: 1fr; }
+      .intro-pages { grid-template-columns: 1fr; }
+      .options { grid-template-columns: 1fr; }
+      .scenario-fields {
+        grid-template-columns: 1fr;
+        grid-template-areas: "number" "question" "hint";
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Persona Loader</h1>
+    </div>
+    <div class="header-status">
+      <div id="notice" class="notice">Open the <strong>StreamingAssets/Personas</strong> folder to load and save files directly.</div>
+      <div class="actions">
+        <button id="changeFolder" hidden>Change folder</button>
+        <button id="openFolder">Open Personas folder</button>
+        <button id="saveActive" class="primary" disabled>Save</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="tabs"><button id="showPersonas" class="tab active">Personas</button><button id="showConfig" class="tab">Config</button></div>
+    <section id="configSection" class="content-block" hidden><div class="block-content"><h2>Config</h2><button id="openConfig">Open StreamingAssets folder</button><button id="saveConfig" class="primary" disabled>Save config</button><div id="configEditor"></div></div></section>
+    <div id="personaSection">
+    <div id="tabs" class="tabs"></div>
+    <div class="toolbar">
+      <div>
+        <h2 id="personaTitle">Persona 1</h2>
+        <div id="fileName" class="file-note">Content plan · persona_1.json</div>
+      </div>
+    </div>
+    <section class="overview" aria-label="Persona content summary">
+      <div class="metric"><span class="metric-label">Scenarios</span><span id="scenarioCount" class="metric-value">0</span></div>
+      <div class="metric"><span class="metric-label">Scenarios complete</span><span id="readyCount" class="metric-value">0 / 0</span></div>
+      <div class="metric"><span class="metric-label">Save status</span><span id="saveStatus" class="metric-value">Saved</span></div>
+    </section>
+    <div id="contentBlocks">
+      <section class="content-block" data-block="details">
+        <button class="block-toggle" type="button" aria-expanded="true"><span><span class="block-title">Key details</span><br><span class="block-summary">Persona name and designation</span></span><span class="chevron">⌄</span></button>
+        <div class="block-content">
+          <div class="persona-profile" aria-label="Persona profile">
+            <label>Persona name<input id="personaName" type="text" placeholder="e.g. Operations Leader"></label>
+            <label>Designation<input id="personaDesignation" type="text" placeholder="e.g. Plant Manager"></label>
+          </div>
+        </div>
+      </section>
+      <section class="content-block" data-block="introduction">
+        <button class="block-toggle" type="button" aria-expanded="false"><span><span class="block-title">Introduction</span><br><span class="block-summary">Three introduction pages</span></span><span class="chevron">⌄</span></button>
+        <div class="block-content" hidden><div id="introductionPages" class="intro-pages"></div></div>
+      </section>
+      <section class="content-block" data-block="tutorial">
+        <button class="block-toggle" type="button" aria-expanded="false"><span><span class="block-title">Tutorial</span><br><span class="block-summary">Tutorial information text</span></span><span class="chevron">⌄</span></button>
+        <div class="block-content" hidden><div id="tutorialEditor"></div></div>
+      </section>
+      <section class="content-block" data-block="scenarios">
+        <button class="block-toggle" type="button" aria-expanded="false"><span><span class="block-title">Scenario data</span><br><span class="block-summary">Choose a numbered scenario to edit</span></span><span class="chevron">⌄</span></button>
+        <div class="block-content" hidden>
+          <div class="toolbar"><div id="scenarioPicker" class="scenario-picker" aria-label="Choose scenario"></div><button id="addScenario">+ Add scenario</button></div>
+          <div id="scenarioList"></div>
+        </div>
+      </section>
+    </div>
+    </div>
+  </main>
+
+  <script>
+    'use strict';
+
+    const PERSONA_COUNT = 6;
+    const personas = Array.from({ length: PERSONA_COUNT }, (_, index) => newPersona(index));
+    const dirty = Array(PERSONA_COUNT).fill(false);
+    const activeScenarios = Array(PERSONA_COUNT).fill(0);
+    let activePersona = 0;
+    let scenariosDirectory = null;
+    let configDirectory = null;
+    let configDirty = false;
+    let configuration = {
+  "questionWaitTime": 60,
+  "tutorialVideos": [
+    "Tutorials/0.mp4",
+    "Tutorials/1.mp4",
+    "Tutorials/2.mp4",
+    "Tutorials/3.mp4",
+    "Tutorials/4.mp4",
+    "Tutorials/5.mp4",
+    "Tutorials/6.mp4"
+  ],
+  "resultVideos": ["Results/0.mp4", "Results/1.mp4", "Results/2.mp4"]
+};
+    let resultDescriptions = {
+  "grades": [
+    { "grade": "A+", "description": "Excellent work! Your choices show a strong understanding of carbon reduction." },
+    { "grade": "B+", "description": "Good work! Keep exploring opportunities to improve your carbon reduction decisions." },
+    { "grade": "C+", "description": "Keep learning! Review the scenarios and try again to strengthen your carbon reduction decisions." }
+  ]
+};
+
+
+    const elements = {
+      tabs: document.querySelector('#tabs'),
+      title: document.querySelector('#personaTitle'),
+      fileName: document.querySelector('#fileName'),
+      personaName: document.querySelector('#personaName'),
+      personaDesignation: document.querySelector('#personaDesignation'),
+      introductionPages: document.querySelector('#introductionPages'),
+      tutorialEditor: document.querySelector('#tutorialEditor'),
+      list: document.querySelector('#scenarioList'),
+      scenarioPicker: document.querySelector('#scenarioPicker'),
+      scenarioCount: document.querySelector('#scenarioCount'),
+      readyCount: document.querySelector('#readyCount'),
+      saveStatus: document.querySelector('#saveStatus'),
+      notice: document.querySelector('#notice'),
+      openFolder: document.querySelector('#openFolder'),
+      saveActive: document.querySelector('#saveActive'),
+      addScenario: document.querySelector('#addScenario')
+    };
+
+    function personaFileName(index) {
+      return `persona_${index + 1}.json`;
+    }
+
+    function newPersona(index) {
+      return {
+        name: `Persona ${index + 1}`,
+        designation: '',
+        introduction: newIntroduction(),
+        tutorial: { infoText: '' },
+        scenarios: []
+      };
+    }
+
+    function newIntroductionPage() {
+      return { heading: '', subheading: '', imagePath: '' };
+    }
+
+    function newIntroduction() {
+      return {
+        page1: newIntroductionPage(),
+        page2: newIntroductionPage(),
+        page3: newIntroductionPage()
+      };
+    }
+
+    function newOption() {
+      return {
+        icon: '',
+        videoPath: '',
+        name: '',
+        description: '',
+        score: 0,
+        scoreText: '',
+        scoreColor: { r: 255, g: 255, b: 255, a: 255 },
+        aiResponse: ''
+      };
+    }
+
+    function newScenario() {
+      const number = personas[activePersona].scenarios.length + 1;
+      const scenario = {
+        number,
+        question: '',
+        hint: '',
+        questionImagePath: '',
+        questionVideoPath: '',
+        option1: newOption(),
+        option2: newOption(),
+        option3: newOption()
+      };
+      applyScenarioMediaDefaults(scenario, activePersona);
+      return scenario;
+    }
+
+    function normalizeOption(value) {
+      const option = value && typeof value === 'object' ? value : {};
+      return {
+        icon: String(option.icon ?? ''),
+        videoPath: String(option.videoPath ?? ''),
+        name: String(option.name ?? ''),
+        description: String(option.description ?? ''),
+        score: Number(option.score) || 0,
+        scoreText: String(option.scoreText ?? ''),
+        scoreColor: normalizeColor(option.scoreColor),
+        aiResponse: String(option.aiResponse ?? '')
+      };
+    }
+
+    function normalizeColor(value) {
+      const color = value && typeof value === 'object' ? value : {};
+      return {
+        r: clampColor(color.r, 255),
+        g: clampColor(color.g, 255),
+        b: clampColor(color.b, 255),
+        a: clampColor(color.a, 255)
+      };
+    }
+
+    function clampColor(value, fallback) {
+      const number = Number(value);
+      return Number.isFinite(number) ? Math.min(255, Math.max(0, number)) : fallback;
+    }
+
+    function normalizeScenario(value, index) {
+      const scenario = value && typeof value === 'object' ? value : {};
+      return {
+        number: Number(scenario.number) || index + 1,
+        question: String(scenario.question ?? ''),
+        hint: String(scenario.hint ?? ''),
+        questionImagePath: String(scenario.questionImagePath ?? ''),
+        questionVideoPath: String(scenario.questionVideoPath ?? ''),
+        option1: normalizeOption(scenario.option1),
+        option2: normalizeOption(scenario.option2),
+        option3: normalizeOption(scenario.option3)
+      };
+    }
+
+    function normalizeIntroductionPage(value) {
+      const page = value && typeof value === 'object' ? value : {};
+      return {
+        heading: String(page.heading ?? ''),
+        subheading: String(page.subheading ?? ''),
+        imagePath: String(page.imagePath ?? '')
+      };
+    }
+
+    function normalizeIntroduction(value) {
+      const introduction = value && typeof value === 'object' ? value : {};
+      return {
+        page1: normalizeIntroductionPage(introduction.page1),
+        page2: normalizeIntroductionPage(introduction.page2),
+        page3: normalizeIntroductionPage(introduction.page3)
+      };
+    }
+
+    function parsePersonaJson(text, index) {
+      const parsed = JSON.parse(text.replace(/^\uFEFF/, ''));
+      const source = Array.isArray(parsed)
+        ? { name: `Persona ${index + 1}`, designation: '', scenarios: parsed }
+        : parsed;
+
+      if (!source || typeof source !== 'object') {
+        throw new Error('Persona JSON must be an object.');
+      }
+
+      if (!Array.isArray(source.scenarios)) {
+        throw new Error("Persona JSON must contain a 'scenarios' array.");
+      }
+
+      const persona = {
+        name: String(source.name ?? `Persona ${index + 1}`),
+        designation: String(source.designation ?? ''),
+        introduction: normalizeIntroduction(source.introduction),
+        tutorial: { infoText: String(source.tutorial?.infoText ?? '') },
+        scenarios: source.scenarios.map(normalizeScenario)
+      };
+      persona.scenarios.forEach(scenario => applyScenarioMediaDefaults(scenario, index));
+      return persona;
+    }
+
+    function applyScenarioMediaDefaults(scenario, personaIndex) {
+      const number = Number(scenario.number) || 1;
+      const root = `Personas/persona_${personaIndex + 1}/scenarios/${number}`;
+      scenario.questionImagePath ||= `${root}/images/question_image.png`;
+      scenario.questionVideoPath ||= `${root}/Scenario ${number}.mp4`;
+      [scenario.option1, scenario.option2, scenario.option3].forEach((option, optionIndex) => {
+        if (!option) return;
+        if (!option.icon || /^Personas\/Icons\//i.test(option.icon)) {
+          option.icon = `${root}/icons/${optionIndex + 1}.png`;
+        }
+        option.videoPath ||= `${root}/videos/Scenario ${number} ${String.fromCharCode(65 + optionIndex)}.mp4`;
+      });
+    }
+
+    function setNotice(message, type = '') {
+      elements.notice.className = `notice ${type}`.trim();
+      elements.notice.textContent = message;
+      elements.openFolder.classList.toggle('loaded', type === 'success');
+    }
+
+    function setDirty(index, value = true) {
+      dirty[index] = value;
+      window.personaDesktop?.setDirtyState((configDirty || dirty.some(Boolean)));
+      renderTabs();
+      updateSaveButtons();
+      updateOverview();
+    }
+
+    function updateSaveButtons() {
+      elements.saveActive.disabled = !scenariosDirectory;
+    }
+
+    function renderTabs() {
+      elements.tabs.replaceChildren();
+      for (let index = 0; index < PERSONA_COUNT; index++) {
+        const button = document.createElement('button');
+        button.className = `tab${index === activePersona ? ' active' : ''}${dirty[index] ? ' dirty' : ''}`;
+        button.textContent = personas[index].name.trim() || `Persona ${index + 1}`;
+        button.addEventListener('click', () => {
+          activePersona = index;
+          render();
+        });
+        elements.tabs.append(button);
+      }
+    }
+
+    function field(labelText, value, onInput, options = {}) {
+      const label = document.createElement('label');
+      if (options.className) label.className = options.className;
+      label.append(document.createTextNode(labelText));
+      const input = options.multiline ? document.createElement('textarea') : document.createElement('input');
+      if (!options.multiline) input.type = options.type || 'text';
+      if (options.rows) input.rows = options.rows;
+      if (options.min !== undefined) input.min = options.min;
+      if (options.max !== undefined) input.max = options.max;
+      if (options.step !== undefined) input.step = options.step;
+      input.value = value ?? '';
+      if (options.placeholder) input.placeholder = options.placeholder;
+      input.addEventListener('input', () => {
+        onInput(options.type === 'number' ? Number(input.value) : input.value);
+        if (options.multiline) resizeTextarea(input);
+      });
+      label.append(input);
+      if (options.multiline) requestAnimationFrame(() => resizeTextarea(input));
+      return label;
+    }
+
+    function assetField(labelText, value, onInput, options = {}) {
+      const wrapper = document.createElement('div');
+      const inputField = field(labelText, value, nextValue => {
+        onInput(nextValue);
+        renderAssetPreview();
+      }, { placeholder: options.placeholder });
+      const input = inputField.querySelector('input');
+      const preview = document.createElement('div');
+      preview.className = 'asset-preview';
+      wrapper.append(inputField, preview);
+
+      async function renderAssetPreview() {
+        preview.replaceChildren();
+        if (!window.personaDesktop) return;
+        const assetPath = input.value.trim();
+        const actions = document.createElement('div');
+        actions.className = 'asset-preview-actions';
+        const state = document.createElement('span');
+        state.className = 'asset-state';
+        const replace = document.createElement('button');
+        replace.type = 'button';
+        replace.textContent = 'Replace file';
+        replace.disabled = !assetPath;
+        replace.addEventListener('click', async () => {
+          try {
+            const result = await window.personaDesktop.replaceAsset(assetPath);
+            if (result.replaced) {
+              setNotice(`Replaced ${assetPath}.`, 'success');
+              renderAssetPreview();
+            }
+          } catch (error) { setNotice(`Could not replace asset: ${error.message}`, 'error'); }
+        });
+        actions.append(state, replace);
+        preview.append(actions);
+        if (!assetPath) { state.textContent = 'Enter an asset path to show its thumbnail.'; return; }
+        const exists = await window.personaDesktop.assetExists(assetPath);
+        if (!exists) { state.textContent = 'File not found in StreamingAssets.'; return; }
+        state.textContent = assetPath;
+        const extension = assetPath.split('.').pop().toLowerCase();
+        const url = `${window.personaDesktop.assetUrl(assetPath)}?v=${Date.now()}`;
+        if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'svg'].includes(extension)) {
+          const image = document.createElement('img');
+          image.src = url;
+          image.alt = `${labelText} thumbnail`;
+          preview.prepend(image);
+        } else if (['mp4', 'webm', 'mov', 'm4v'].includes(extension)) {
+          const video = document.createElement('video');
+          video.src = url;
+          video.controls = true;
+          video.preload = 'metadata';
+          preview.prepend(video);
+        } else {
+          state.textContent = `${assetPath} (preview unavailable for this file type)`;
+        }
+      }
+
+      renderAssetPreview();
+      return wrapper;
+    }
+
+    function resizeTextarea(textarea) {
+      textarea.style.height = 'auto';
+      const height = Math.min(Math.max(textarea.scrollHeight, 82), 360);
+      textarea.style.height = `${height}px`;
+      textarea.style.overflowY = textarea.scrollHeight > 360 ? 'auto' : 'hidden';
+    }
+
+    function colorToHex(color) {
+      const channel = value => Math.round(clampColor(value, 255)).toString(16).padStart(2, '0');
+      return `#${channel(color.r)}${channel(color.g)}${channel(color.b)}`;
+    }
+
+    function hexToColor(hex, alpha) {
+      return {
+        r: parseInt(hex.slice(1, 3), 16),
+        g: parseInt(hex.slice(3, 5), 16),
+        b: parseInt(hex.slice(5, 7), 16),
+        a: clampColor(alpha, 255)
+      };
+    }
+
+    function optionEditor(option, title) {
+      const panel = document.createElement('section');
+      panel.className = 'option';
+      const kicker = document.createElement('div');
+      kicker.className = 'option-kicker';
+      kicker.textContent = 'Decision option';
+      const heading = document.createElement('h4');
+      heading.textContent = title;
+      panel.append(kicker, heading);
+
+      const changed = () => setDirty(activePersona);
+      panel.append(
+        field('Choice title', option.name, value => { option.name = value; changed(); }),
+        field('Player-facing description', option.description, value => { option.description = value; changed(); }, { multiline: true, rows: 5, className: 'option-description' }),
+        field('AI feedback after selection', option.aiResponse, value => { option.aiResponse = value; changed(); }, { multiline: true, rows: 6, className: 'option-response' }),
+        assetField('Icon asset path', option.icon, value => { option.icon = value; changed(); }, { placeholder: 'Personas/persona_1/scenarios/1/icons/1.png' }),
+        assetField('Option video path', option.videoPath, value => { option.videoPath = value; changed(); }, { placeholder: 'Personas/persona_1/scenarios/1/videos/Scenario 1 A.mp4' })
+      );
+
+      const scoreGrid = document.createElement('div');
+      scoreGrid.className = 'score-grid';
+      scoreGrid.append(
+        field('Score value', option.score, value => { option.score = value; changed(); }, { type: 'number' }),
+        field('Display label', option.scoreText, value => { option.scoreText = value; changed(); })
+      );
+
+      const colorLabel = document.createElement('label');
+      colorLabel.append(document.createTextNode('Score color'));
+      const colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.value = colorToHex(option.scoreColor);
+      colorInput.addEventListener('input', () => {
+        option.scoreColor = hexToColor(colorInput.value, option.scoreColor.a);
+        changed();
+      });
+      colorLabel.append(colorInput);
+      scoreGrid.append(colorLabel);
+
+      scoreGrid.append(field('Opacity (0–255)', option.scoreColor.a, value => {
+        option.scoreColor.a = clampColor(value, 255);
+        changed();
+      }, { type: 'number', min: 0, max: 255, step: 1 }));
+
+      panel.append(scoreGrid);
+
+      return panel;
+    }
+
+    function isScenarioReady(scenario) {
+      if (!scenario.question.trim() || !scenario.hint.trim()) return false;
+      return [scenario.option1, scenario.option2, scenario.option3].every(option =>
+        option.name.trim() &&
+        option.description.trim() &&
+        option.aiResponse.trim() &&
+        option.icon.trim()
+      );
+    }
+
+    function scenarioEditor(scenario, index) {
+      const card = document.createElement('article');
+      card.className = 'scenario';
+
+      const head = document.createElement('div');
+      head.className = 'scenario-head';
+      const titleGroup = document.createElement('div');
+      const eyebrow = document.createElement('div');
+      eyebrow.className = 'eyebrow';
+      eyebrow.textContent = `Content item ${index + 1}`;
+      const title = document.createElement('h3');
+      title.textContent = `Scenario ${scenario.number || index + 1}`;
+      const status = document.createElement('span');
+      const ready = isScenarioReady(scenario);
+      status.className = `scenario-status${ready ? ' ready' : ''}`;
+      status.textContent = ready ? 'Content ready' : 'Draft';
+      title.append(status);
+      titleGroup.append(eyebrow, title);
+      const remove = document.createElement('button');
+      remove.className = 'danger';
+      remove.textContent = 'Remove';
+      remove.addEventListener('click', () => {
+        if (!confirm(`Remove scenario ${index + 1}?`)) return;
+        personas[activePersona].scenarios.splice(index, 1);
+        activeScenarios[activePersona] = Math.max(0, Math.min(index, personas[activePersona].scenarios.length - 1));
+        setDirty(activePersona);
+        render();
+      });
+      head.append(titleGroup, remove);
+      card.append(head);
+
+      const changed = () => setDirty(activePersona);
+      const basicFields = document.createElement('div');
+      basicFields.className = 'scenario-fields';
+      basicFields.append(
+        field('Sequence number', scenario.number, value => { scenario.number = value; changed(); }, { type: 'number', min: 1, step: 1, className: 'scenario-number' }),
+        field('Scenario question / decision prompt', scenario.question, value => { scenario.question = value; changed(); }, { multiline: true, rows: 5, className: 'scenario-question' }),
+        field('Participant guidance / hint', scenario.hint, value => { scenario.hint = value; changed(); }, { multiline: true, rows: 6, className: 'scenario-hint' })
+      );
+      card.append(basicFields);
+
+      const mediaHeading = document.createElement('div');
+      mediaHeading.className = 'section-heading';
+      mediaHeading.innerHTML = '<h4>Question media</h4><p>Image displayed with the question and video played before decision options appear.</p>';
+      card.append(mediaHeading, assetField(
+        'Question image path',
+        scenario.questionImagePath,
+        value => { scenario.questionImagePath = value; changed(); },
+        { placeholder: 'Personas/persona_1/scenarios/1/images/question_image.png' }
+      ), assetField(
+        'Question video path',
+        scenario.questionVideoPath,
+        value => { scenario.questionVideoPath = value; changed(); },
+        { placeholder: 'Personas/persona_1/scenarios/1/Scenario 1.mp4' }
+      ));
+
+      const optionsHeading = document.createElement('div');
+      optionsHeading.className = 'section-heading';
+      const optionsTitle = document.createElement('h4');
+      optionsTitle.textContent = 'Decision options';
+      const optionsDescription = document.createElement('p');
+      optionsDescription.textContent = 'Define the three choices, participant copy, feedback, and scoring.';
+      optionsHeading.append(optionsTitle, optionsDescription);
+      card.append(optionsHeading);
+
+      const options = document.createElement('div');
+      options.className = 'options';
+      options.append(
+        optionEditor(scenario.option1, 'Option 1'),
+        optionEditor(scenario.option2, 'Option 2'),
+        optionEditor(scenario.option3, 'Option 3')
+      );
+      card.append(options);
+      return card;
+    }
+
+    function renderIntroduction(persona) {
+      elements.introductionPages.replaceChildren();
+      ['page1', 'page2', 'page3'].forEach((key, index) => {
+        const page = persona.introduction[key];
+        const panel = document.createElement('section');
+        panel.className = 'intro-page';
+        const heading = document.createElement('h3');
+        heading.textContent = `Page ${index + 1}`;
+        const changed = () => setDirty(activePersona);
+        panel.append(
+          heading,
+          field('Heading', page.heading, value => { page.heading = value; changed(); }),
+          field('Subheading', page.subheading, value => { page.subheading = value; changed(); }, { multiline: true, rows: 4 }),
+          assetField('Image or video asset path', page.imagePath, value => { page.imagePath = value; changed(); }, { placeholder: 'Personas/persona_1/introduction/1.mp4' })
+        );
+        elements.introductionPages.append(panel);
+      });
+    }
+
+    function renderTutorial(persona) {
+      elements.tutorialEditor.replaceChildren(
+        field('Info text', persona.tutorial.infoText, value => {
+          persona.tutorial.infoText = value;
+          setDirty(activePersona);
+        }, { multiline: true, rows: 8, className: 'tutorial-field' })
+      );
+    }
+
+    function renderScenarioPicker(scenarios) {
+      elements.scenarioPicker.replaceChildren();
+      scenarios.forEach((scenario, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = index === activeScenarios[activePersona] ? 'active' : '';
+        button.textContent = index + 1;
+        button.title = `Scenario ${scenario.number || index + 1}`;
+        button.setAttribute('aria-pressed', index === activeScenarios[activePersona] ? 'true' : 'false');
+        button.addEventListener('click', () => {
+          activeScenarios[activePersona] = index;
+          render();
+        });
+        elements.scenarioPicker.append(button);
+      });
+    }
+
+    function updateOverview() {
+      const scenarios = personas[activePersona].scenarios;
+      const ready = scenarios.filter(isScenarioReady).length;
+      elements.scenarioCount.textContent = scenarios.length;
+      elements.readyCount.textContent = `${ready} / ${scenarios.length}`;
+      elements.saveStatus.textContent = dirty[activePersona] ? 'Unsaved changes' : 'Saved';
+    }
+
+    function render() {
+      renderTabs();
+      const persona = personas[activePersona];
+      elements.title.textContent = persona.name.trim() || `Persona ${activePersona + 1}`;
+      elements.fileName.textContent = `Content plan · ${personaFileName(activePersona)}`;
+      elements.personaName.value = persona.name;
+      elements.personaDesignation.value = persona.designation;
+      renderIntroduction(persona);
+      renderTutorial(persona);
+      elements.list.replaceChildren();
+      updateOverview();
+
+      const scenarios = persona.scenarios;
+      renderScenarioPicker(scenarios);
+      if (scenarios.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = 'No scenarios yet. Select “Add scenario” to create one.';
+        elements.list.append(empty);
+        return;
+      }
+
+      activeScenarios[activePersona] = Math.min(activeScenarios[activePersona], scenarios.length - 1);
+      const scenarioIndex = activeScenarios[activePersona];
+      elements.list.append(scenarioEditor(scenarios[scenarioIndex], scenarioIndex));
+    }
+
+    async function openScenariosFolder() {
+      if (window.personaDesktop) {
+        try {
+          const result = await window.personaDesktop.loadPersonas();
+          const loaded = [];
+          result.personas.forEach((entry, index) => {
+            if (entry.text === null) {
+              personas[index] = newPersona(index);
+              dirty[index] = true;
+            } else {
+              personas[index] = parsePersonaJson(entry.text, index);
+              dirty[index] = false;
+              loaded.push(entry.fileName);
+            }
+          });
+          scenariosDirectory = result.root;
+          elements.openFolder.textContent = 'Reload files';
+          updateSaveButtons();
+          render();
+          setNotice(`Loaded ${loaded.length} personas from ${result.root}.`, loaded.length ? 'success' : 'error');
+        } catch (error) { setNotice(`Could not load personas: ${error.message}`, 'error'); }
+        return;
+      }
+      if (!window.showDirectoryPicker) {
+        setNotice('Direct folder saving is unavailable in this browser. Open this editor in Chrome or Edge.', 'error');
+        return;
+      }
+
+      try {
+        const selectedDirectory = await window.showDirectoryPicker({ mode: 'readwrite' });
+        const directory = await resolvePersonasDirectory(selectedDirectory);
+        const loaded = [];
+
+        for (let index = 0; index < PERSONA_COUNT; index++) {
+          const name = personaFileName(index);
+          try {
+            const handle = await directory.getFileHandle(name);
+            const file = await handle.getFile();
+            personas[index] = parsePersonaJson(await file.text(), index);
+            dirty[index] = false;
+            loaded.push(name);
+          } catch (error) {
+            if (error.name !== 'NotFoundError') throw error;
+            personas[index] = newPersona(index);
+            dirty[index] = true;
+          }
+        }
+
+        scenariosDirectory = directory;
+        updateSaveButtons();
+        render();
+        if (loaded.length === 0) {
+          setNotice(`Opened “${directory.name}”, but no persona_1.json through persona_6.json files were found.`, 'error');
+        } else {
+          setNotice(`Loaded ${loaded.length} personas from files.`, 'success');
+        }
+      } catch (error) {
+        if (error.name !== 'AbortError') setNotice(`Could not open folder: ${error.message}`, 'error');
+      }
+    }
+
+    async function resolvePersonasDirectory(selectedDirectory) {
+      try {
+        await selectedDirectory.getFileHandle(personaFileName(0));
+        return selectedDirectory;
+      } catch (error) {
+        if (error.name !== 'NotFoundError') throw error;
+      }
+
+      try {
+        return await selectedDirectory.getDirectoryHandle('Personas');
+      } catch (error) {
+        if (error.name === 'NotFoundError') return selectedDirectory;
+        throw error;
+      }
+    }
+
+    async function writePersona(index) {
+      if (!scenariosDirectory) throw new Error('Open the Personas folder first.');
+      if (window.personaDesktop) {
+        await window.personaDesktop.savePersona(personaFileName(index), JSON.stringify(personas[index], null, 2) + '\n');
+        dirty[index] = false;
+        window.personaDesktop.setDirtyState(configDirty || dirty.some(Boolean));
+        return;
+      }
+      const handle = await scenariosDirectory.getFileHandle(personaFileName(index), { create: true });
+      const writable = await handle.createWritable();
+      await writable.write(JSON.stringify(personas[index], null, 2) + '\n');
+      await writable.close();
+      dirty[index] = false;
+    }
+
+    async function saveActive() {
+      try {
+        await writePersona(activePersona);
+        renderTabs();
+        updateOverview();
+        setNotice(`Saved ${personaFileName(activePersona)}.`, 'success');
+      } catch (error) {
+        setNotice(`Could not save: ${error.message}`, 'error');
+      }
+    }
+
+    elements.openFolder.addEventListener('click', openScenariosFolder);
+    elements.saveActive.addEventListener('click', saveActive);
+
+    elements.personaName.addEventListener('input', () => {
+      personas[activePersona].name = elements.personaName.value;
+      elements.title.textContent = elements.personaName.value.trim() || `Persona ${activePersona + 1}`;
+      setDirty(activePersona);
+    });
+
+    elements.personaDesignation.addEventListener('input', () => {
+      personas[activePersona].designation = elements.personaDesignation.value;
+      setDirty(activePersona);
+    });
+
+    elements.addScenario.addEventListener('click', () => {
+      const scenarios = personas[activePersona].scenarios;
+      const current = scenarios[activeScenarios[activePersona]];
+      const scenario = current
+        ? normalizeScenario(JSON.parse(JSON.stringify(current)), scenarios.length)
+        : newScenario();
+      scenario.number = scenarios.length + 1;
+      scenario.questionImagePath = '';
+      scenario.questionVideoPath = '';
+      [scenario.option1, scenario.option2, scenario.option3].forEach(option => {
+        option.icon = '';
+        option.videoPath = '';
+      });
+      applyScenarioMediaDefaults(scenario, activePersona);
+      scenarios.push(scenario);
+      activeScenarios[activePersona] = scenarios.length - 1;
+      setDirty(activePersona);
+      render();
+    });
+
+    document.querySelectorAll('.block-toggle').forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const block = toggle.closest('.content-block');
+        const willOpen = toggle.getAttribute('aria-expanded') !== 'true';
+        document.querySelectorAll('.content-block[data-block]').forEach(other => {
+          const otherToggle = other.querySelector('.block-toggle');
+          const otherContent = other.querySelector('.block-content');
+          const isTarget = other === block && willOpen;
+          otherToggle.setAttribute('aria-expanded', isTarget ? 'true' : 'false');
+          otherContent.hidden = !isTarget;
+        });
+      });
+    });
+
+    // The desktop shell provides a native close prompt. Keep the browser-only
+    // warning for people who open this HTML file directly.
+    window.addEventListener('beforeunload', event => {
+      if (window.personaDesktop || !(configDirty || dirty.some(Boolean))) return;
+      event.preventDefault();
+      event.returnValue = '';
+    });
+
+    render();
+    if (window.personaDesktop) {
+      elements.openFolder.textContent = 'Reload files';
+      setNotice('Loading personas beside Persona Loader…');
+      openScenariosFolder();
+    }
+
+    function setConfigDirty() {
+      configDirty = true;
+      document.querySelector('#saveConfig').textContent = 'Save config *';
+      window.personaDesktop?.setDirtyState(configDirty || dirty.some(Boolean));
+    }
+
+    function renderConfig() {
+      const editor = document.querySelector('#configEditor');
+      editor.replaceChildren(field('Question wait time (seconds)', configuration.questionWaitTime,
+        value => { configuration.questionWaitTime = value; setConfigDirty(); }, { type: 'number', min: 1, step: 1 }));
+      const tutorials = document.createElement('h3'); tutorials.textContent = 'Tutorials'; editor.append(tutorials);
+      configuration.tutorialVideos.forEach((video, index) => editor.append(assetField('Page ' + index + ' video', video,
+        value => { configuration.tutorialVideos[index] = value; setConfigDirty(); })));
+      const add = document.createElement('button'); add.textContent = '+ Add tutorial video';
+      add.onclick = () => { configuration.tutorialVideos.push('Tutorials/' + configuration.tutorialVideos.length + '.mp4'); setConfigDirty(); renderConfig(); }; editor.append(add);
+      const results = document.createElement('h3'); results.textContent = 'Results'; editor.append(results);
+      ['A+', 'B+', 'C+'].forEach((grade, index) => {
+        let entry = resultDescriptions.grades.find(item => item.grade === grade);
+        if (!entry) { entry = { grade, description: '' }; resultDescriptions.grades.push(entry); }
+        editor.append(assetField(grade + ' video', configuration.resultVideos[index],
+          value => { configuration.resultVideos[index] = value; setConfigDirty(); }),
+          field(grade + ' description', entry.description, value => { entry.description = value; setConfigDirty(); }, { multiline: true, rows: 4 }));
+      });
+    }
+
+    async function configFileHandle(relativePath, create = false) {
+      const parts = relativePath.split('/'); let directory = configDirectory;
+      for (const part of parts.slice(0, -1)) directory = await directory.getDirectoryHandle(part, { create });
+      return directory.getFileHandle(parts.at(-1), { create });
+    }
+
+    async function loadConfig() {
+      try {
+        if (!window.personaDesktop && !configDirectory) {
+          configDirectory = await window.showDirectoryPicker({ mode: 'readwrite' });
+          if (configDirectory.name === 'Personas') throw new Error('Select StreamingAssets, which contains config.json and Results.');
+        }
+        async function read(relativePath) {
+          if (window.personaDesktop) return window.personaDesktop.readConfig(relativePath);
+          try { return await (await (await configFileHandle(relativePath)).getFile()).text(); }
+          catch (error) { if (error.name === 'NotFoundError') return null; throw error; }
+        }
+        const configText = await read('config.json');
+        const descriptionText = await read('Results/descriptions.json');
+        const next = configText ? JSON.parse(configText) : configuration;
+        const descriptions = descriptionText ? JSON.parse(descriptionText) : resultDescriptions;
+        if (!Array.isArray(next.tutorialVideos) || !next.tutorialVideos.every(value => typeof value === 'string') ||
+            !Array.isArray(next.resultVideos) || next.resultVideos.length !== 3 || !next.resultVideos.every(value => typeof value === 'string') ||
+            !Number.isFinite(next.questionWaitTime) || next.questionWaitTime <= 0 || !Array.isArray(descriptions.grades)) throw new Error('Invalid config or descriptions JSON.');
+        configuration = next; resultDescriptions = descriptions; configDirty = !configText || !descriptionText;
+        document.querySelector('#saveConfig').disabled = false;
+        document.querySelector('#saveConfig').textContent = configDirty ? 'Save config *' : 'Save config';
+        window.personaDesktop?.setDirtyState(configDirty || dirty.some(Boolean));
+        renderConfig(); setNotice('Config loaded from StreamingAssets.', 'success');
+      } catch (error) { if (error.name !== 'AbortError') setNotice('Could not load config: ' + error.message, 'error'); }
+    }
+
+    async function saveConfig() {
+      try {
+        if (!Number.isFinite(configuration.questionWaitTime) || configuration.questionWaitTime <= 0) throw new Error('Question wait time must be greater than zero.');
+        for (const [relativePath, data] of [['config.json', configuration], ['Results/descriptions.json', resultDescriptions]]) {
+          const text = JSON.stringify(data, null, 2) + '\n';
+          if (window.personaDesktop) await window.personaDesktop.saveConfig(relativePath, text);
+          else { const writable = await (await configFileHandle(relativePath, true)).createWritable(); await writable.write(text); await writable.close(); }
+        }
+        configDirty = false; document.querySelector('#saveConfig').textContent = 'Save config';
+        window.personaDesktop?.setDirtyState(dirty.some(Boolean)); setNotice('Config and grade descriptions saved.', 'success');
+      } catch (error) { setNotice('Could not save config: ' + error.message, 'error'); }
+    }
+
+    document.querySelector('#showConfig').onclick = () => {
+      elements.openFolder.hidden = true; elements.saveActive.hidden = true;
+      document.querySelector('#personaSection').hidden = true; document.querySelector('#configSection').hidden = false;
+      document.querySelector('#showConfig').classList.add('active'); document.querySelector('#showPersonas').classList.remove('active'); renderConfig();
+    };
+    document.querySelector('#showPersonas').onclick = () => {
+      elements.openFolder.hidden = false; elements.saveActive.hidden = false;
+      document.querySelector('#personaSection').hidden = false; document.querySelector('#configSection').hidden = true;
+      document.querySelector('#showPersonas').classList.add('active'); document.querySelector('#showConfig').classList.remove('active');
+    };
+    document.querySelector('#openConfig').onclick = () => { configDirectory = null; loadConfig(); };
+    document.querySelector('#saveConfig').onclick = saveConfig;
+    if (window.personaDesktop) loadConfig();
+
+
+    if (window.personaDesktop) {
+      const changeFolder = document.querySelector('#changeFolder');
+      changeFolder.hidden = false;
+      changeFolder.onclick = async () => {
+        changeFolder.disabled = true;
+        try {
+          const result = await window.personaDesktop.changeFolder();
+          if (result.changed) window.location.reload();
+        } catch (error) { setNotice('Could not change folder: ' + error.message, 'error'); }
+        finally { changeFolder.disabled = false; }
+      };
+    }
+
+  </script>
+</body>
+</html>

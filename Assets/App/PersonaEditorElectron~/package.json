@@ -1,0 +1,41 @@
+{
+  "name": "carbon-stories-persona-loader",
+  "version": "1.0.0",
+  "description": "Portable editor for Carbon Stories StreamingAssets personas",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win dir",
+    "build:portable": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "com.carbonstories.personaloader",
+    "productName": "Persona Loader",
+    "asar": true,
+    "npmRebuild": false,
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../../StreamingAssets/persona-editor.html",
+        "to": "persona-editor.html"
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "dir",
+      "requestedExecutionLevel": "asInvoker",
+      "signAndEditExecutable": false
+    }
+  }
+}

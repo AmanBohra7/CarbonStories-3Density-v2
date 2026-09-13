@@ -1,0 +1,78 @@
+{
+  "name": "Omar Othmani",
+  "designation": "Logistics & Freight Company CEO",
+  "introduction": {
+    "page1": {
+      "heading": "Who is he?",
+      "subheading": "Adnan Abdullah is a self-made industrialist. He likely inherited the land or initial business from his father, expanded it during the construction boom, and now supplies major contractors, municipalities, and giga-projects. ",
+      "imagePath": "Personas/persona_4/dp.png"
+    },
+    "page2": {
+      "heading": "What He Wants",
+      "subheading": "• Respect & Legacy: He is focused on ensuring his sons are prepared to take over the business.\n• Stability: He requires clear regulatory roadmaps to ensure operational consistency as he navigates the decarbonization process.\n• Reputation: As a vital national contributor, he seeks to balance his industrial output with responsible decarbonization.\n• Control: He prioritizes proven technologies to safeguard his role as a stable contributor to the national infrastructure.",
+      "imagePath": ""
+    },
+    "page3": {
+      "heading": "",
+      "subheading": "• Produces: Clinker & cement.\n• Annual Production: 1.2 million tons of cement.\n• Annual Revenue: SAR 250 million.\n• Annual Emissions: 1,000,000 tons of CO_2 per year.\n",
+      "imagePath": "Personas/persona_4/info_image.png"
+    }
+  },
+  "tutorial": {
+    "infoText": ""
+  },
+  "scenarios": [
+    {
+      "number": 1,
+      "question": "How will you travel today?",
+      "hint": "Consider the carbon impact of each choice.",
+      "questionImagePath": "Personas/persona_4/scenarios/1/images/question_image.png",
+      "questionVideoPath": "Personas/persona_4/scenarios/1/Scenario 1.mp4",
+      "option1": {
+        "icon": "Personas/persona_4/scenarios/1/icons/1.png",
+        "videoPath": "Personas/persona_4/scenarios/1/videos/Scenario 1 A.mp4",
+        "name": "Walk",
+        "description": "Travel on foot.",
+        "score": 10,
+        "scoreText": "+10",
+        "scoreColor": {
+          "r": 51,
+          "g": 204,
+          "b": 77,
+          "a": 255
+        },
+        "aiResponse": ""
+      },
+      "option2": {
+        "icon": "Personas/persona_4/scenarios/1/icons/2.png",
+        "videoPath": "Personas/persona_4/scenarios/1/videos/Scenario 1 B.mp4",
+        "name": "Bus",
+        "description": "Use public transport.",
+        "score": 5,
+        "scoreText": "+5",
+        "scoreColor": {
+          "r": 230,
+          "g": 179,
+          "b": 51,
+          "a": 255
+        },
+        "aiResponse": ""
+      },
+      "option3": {
+        "icon": "Personas/persona_4/scenarios/1/icons/3.png",
+        "videoPath": "Personas/persona_4/scenarios/1/videos/Scenario 1 C.mp4",
+        "name": "Car",
+        "description": "Drive alone.",
+        "score": -5,
+        "scoreText": "-5",
+        "scoreColor": {
+          "r": 230,
+          "g": 51,
+          "b": 51,
+          "a": 255
+        },
+        "aiResponse": ""
+      }
+    }
+  ]
+}
