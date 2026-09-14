@@ -20,3 +20,11 @@ npm run build
 Copy the complete `dist/win-unpacked` directory to `StreamingAssets/Persona-Loader`. Launch `Persona Loader.exe` inside it. End users do not need Node.js or an installer. Keep the directory together; unlike the old portable executable, it does not unpack itself on every launch.
 
 The legacy single-file build is still available with `npm run build:portable`, but it starts more slowly because Electron must extract itself to the temporary directory each time.
+
+## Confirmation overlay videos
+
+Each decision option has a **Confirmation overlay video path (optional)** field, separate from its **Answer video path**. The default is `Personas/persona_1/scenarios/1/optionVideos/1.mp4`, using the current persona, scenario number, and option number (1, 2, or 3). Use the media preview and Replace control to add or replace a video at that path, then save the persona.
+
+The original confirmation and score timing stays the same. The game starts an existing overlay video alongside the answer video, plays it once, and fades it out on completion. If the answer finishes first, the overlay also fades out before the next options appear. Missing files are skipped independently: `1.mp4` and `3.mp4` can exist without `2.mp4`. Assign a separate Option Media Player and Option Video Canvas Group on ScenarioScreen in Unity. ScenarioScreen controls the additional CanvasGroup fade using Option Video Fade Duration; CustomMediaPlayer controls the video fade.
+
+The CMS page source is `../../StreamingAssets/persona-editor.html`; both development and Windows packaging use this file. Run `npm run build` after CMS edits and copy the complete `dist/win-unpacked` folder to `StreamingAssets/Persona-Loader`.

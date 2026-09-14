@@ -131,6 +131,49 @@ public class CustomMediaPlayer : MonoBehaviour
         }
     }
 
+    /// <summary>Fades out the displayed video, stops playback, then invokes the callback.</summary>
+    public void Hide(Action onHidden = null)
+    {
+        requestVersion++;
+        CancelCrossFade();
+        currentVideoSlotIndex = -1;
+        pendingSlotIndex = -1;
+        pendingPath = null;
+        if (!HasValidSlots() || !isActiveAndEnabled)
+        {
+            Stop();
+            onHidden?.Invoke();
+            return;
+        }
+        crossFadeRoutine = StartCoroutine(FadeOut(requestVersion, onHidden));
+    }
+
+    private IEnumerator FadeOut(int version, Action onHidden)
+    {
+        float[] alphas = { slots[0].canvasGroup.alpha, slots[1].canvasGroup.alpha };
+        float[] volumes = { slots[0].mediaPlayer.AudioVolume, slots[1].mediaPlayer.AudioVolume };
+        foreach (PlayerSlot slot in slots)
+            SetCanvasState(slot, slot.canvasGroup.alpha, false);
+
+        float elapsed = 0f;
+        while (elapsed < crossFadeDuration && version == requestVersion)
+        {
+            elapsed += useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            float blend = Mathf.Clamp01(crossFadeCurve.Evaluate(Mathf.Clamp01(elapsed / crossFadeDuration)));
+            for (int i = 0; i < slots.Length; i++)
+            {
+                slots[i].canvasGroup.alpha = alphas[i] * (1f - blend);
+                if (crossFadeAudio)
+                    slots[i].mediaPlayer.AudioVolume = volumes[i] * (1f - blend);
+            }
+            yield return null;
+        }
+        crossFadeRoutine = null;
+        if (version != requestVersion) yield break;
+        Stop();
+        onHidden?.Invoke();
+    }
+
     private void OnMediaPlayerEvent(
         MediaPlayer mediaPlayer,
         MediaPlayerEvent.EventType eventType,
@@ -142,6 +185,15 @@ public class CustomMediaPlayer : MonoBehaviour
         {
             currentVideoSlotIndex = -1;
             OnVideoEnded?.Invoke();
+            return;
+        }
+
+        if (eventType == MediaPlayerEvent.EventType.Error &&
+            currentVideoSlotIndex >= 0 && slots[currentVideoSlotIndex].mediaPlayer == mediaPlayer)
+        {
+            currentVideoSlotIndex = -1;
+            onMediaError?.Invoke();
+            OnVideoFailed?.Invoke();
             return;
         }
 

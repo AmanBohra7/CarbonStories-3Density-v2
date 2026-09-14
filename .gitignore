@@ -11,6 +11,8 @@
 /[Uu]ser[Ss]ettings/
 /CustomPackages
 
+Assets/StreamingAssets
+
 *.exe
 
 /Python/.venv/

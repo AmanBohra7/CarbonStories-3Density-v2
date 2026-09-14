@@ -383,6 +383,7 @@
       return {
         icon: '',
         videoPath: '',
+        optionVideoPath: '',
         name: '',
         description: '',
         score: 0,
@@ -413,6 +414,7 @@
       return {
         icon: String(option.icon ?? ''),
         videoPath: String(option.videoPath ?? ''),
+        optionVideoPath: String(option.optionVideoPath ?? ''),
         name: String(option.name ?? ''),
         description: String(option.description ?? ''),
         score: Number(option.score) || 0,
@@ -504,6 +506,7 @@
         if (!option.icon || /^Personas\/Icons\//i.test(option.icon)) {
           option.icon = `${root}/icons/${optionIndex + 1}.png`;
         }
+        option.optionVideoPath ||= `${root}/optionVideos/${optionIndex + 1}.mp4`;
         option.videoPath ||= `${root}/videos/Scenario ${number} ${String.fromCharCode(65 + optionIndex)}.mp4`;
       });
     }
@@ -658,7 +661,8 @@
         field('Player-facing description', option.description, value => { option.description = value; changed(); }, { multiline: true, rows: 5, className: 'option-description' }),
         field('AI feedback after selection', option.aiResponse, value => { option.aiResponse = value; changed(); }, { multiline: true, rows: 6, className: 'option-response' }),
         assetField('Icon asset path', option.icon, value => { option.icon = value; changed(); }, { placeholder: 'Personas/persona_1/scenarios/1/icons/1.png' }),
-        assetField('Option video path', option.videoPath, value => { option.videoPath = value; changed(); }, { placeholder: 'Personas/persona_1/scenarios/1/videos/Scenario 1 A.mp4' })
+        assetField('Confirmation overlay video path (optional)', option.optionVideoPath, value => { option.optionVideoPath = value; changed(); }, { placeholder: 'Personas/persona_1/scenarios/1/optionVideos/1.mp4' }),
+        assetField('Answer video path', option.videoPath, value => { option.videoPath = value; changed(); }, { placeholder: 'Personas/persona_1/scenarios/1/videos/Scenario 1 A.mp4' })
       );
 
       const scoreGrid = document.createElement('div');
@@ -985,6 +989,7 @@
       [scenario.option1, scenario.option2, scenario.option3].forEach(option => {
         option.icon = '';
         option.videoPath = '';
+        option.optionVideoPath = '';
       });
       applyScenarioMediaDefaults(scenario, activePersona);
       scenarios.push(scenario);
