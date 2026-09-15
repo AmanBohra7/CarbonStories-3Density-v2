@@ -92,7 +92,7 @@ namespace CarbonStories
         {
             currentPersona = Persona.Persona_1;
             CurrentUserResult = TestResult;
-            DJScreenHandler.Instance.LoadScreen(ResultScreen.GetInfo());
+            DJScreenHandler.Instance.LoadScreen(ScenarioScreen.GetInfo());
         }
 
         public void LoadScreen(DJScreen screen)

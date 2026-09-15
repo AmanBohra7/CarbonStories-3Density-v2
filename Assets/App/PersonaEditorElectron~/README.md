@@ -27,4 +27,4 @@ Each decision option has a **Confirmation overlay video path (optional)** field,
 
 The original confirmation and score timing stays the same. The game starts an existing overlay video alongside the answer video, plays it once, and fades it out on completion. If the answer finishes first, the overlay also fades out before the next options appear. Missing files are skipped independently: `1.mp4` and `3.mp4` can exist without `2.mp4`. Assign a separate Option Media Player and Option Video Canvas Group on ScenarioScreen in Unity. ScenarioScreen controls the additional CanvasGroup fade using Option Video Fade Duration; CustomMediaPlayer controls the video fade.
 
-The CMS page source is `../../StreamingAssets/persona-editor.html`; both development and Windows packaging use this file. Run `npm run build` after CMS edits and copy the complete `dist/win-unpacked` folder to `StreamingAssets/Persona-Loader`.
+The CMS page source is `persona-editor.html` in this Electron project; both development and Windows packaging use this file. Run `npm run build` after CMS edits and copy the complete `dist/win-unpacked` folder to `StreamingAssets/Persona-Loader`.

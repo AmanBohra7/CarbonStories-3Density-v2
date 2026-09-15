@@ -211,6 +211,8 @@ namespace CarbonStories
             if (page.description != null)
                 page.description.text = data.subheading ?? string.Empty;
 
+            page.videoPath = data.videoPath ?? string.Empty;
+
             if (page.image != null)
             {
                 page.image.sprite = data.image;

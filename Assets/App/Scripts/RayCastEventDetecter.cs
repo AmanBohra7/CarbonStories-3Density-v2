@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(RectTransform))]
-public class RayCastEventDetecter : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler
+public class RayCastEventDetecter : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
 {
     private RectTransform _rectTransform;
 
@@ -35,6 +35,19 @@ public class RayCastEventDetecter : MonoBehaviour, IPointerEnterHandler, IPointe
         if(pressed) AudioSource.PlayClipAtPoint(pressed, Vector3.one, 0.75f);
         LeanTween.cancel(_tweenIndex);
         _tweenIndex = LeanTween.scale(gameObject, _initialScale + Vector3.one * pressedScaleFactor, tweenTime).setEase(tweenType).id;
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        if (btn != null && !btn.interactable) return;
+
+        LeanTween.cancel(_tweenIndex);
+        GameObject raycastTarget = eventData.pointerCurrentRaycast.gameObject;
+        bool isStillHovering = raycastTarget != null && raycastTarget.transform.IsChildOf(transform);
+        Vector3 targetScale = isStillHovering
+            ? _initialScale + Vector3.one * hoverScaleFactor
+            : _initialScale;
+        _tweenIndex = LeanTween.scale(gameObject, targetScale, tweenTime).setEase(tweenType).id;
     }
 
     public void OnPointerEnter(PointerEventData eventData)

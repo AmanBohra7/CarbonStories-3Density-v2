@@ -113,9 +113,7 @@ async function createWindow() {
 
   window.on('closed', () => { if (mainWindow === window) mainWindow = null; });
 
-  const htmlPath = app.isPackaged
-    ? path.join(process.resourcesPath, 'persona-editor.html')
-    : path.resolve(__dirname, '..', '..', 'StreamingAssets', 'persona-editor.html');
+  const htmlPath = path.join(__dirname, 'persona-editor.html');
   await window.loadFile(htmlPath);
 }
 

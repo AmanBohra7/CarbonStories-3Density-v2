@@ -13,6 +13,7 @@ namespace CarbonStories
         public string heading;
         public string subheading;
         public string imagePath;
+        public string videoPath;
         public Sprite image;
     }
 

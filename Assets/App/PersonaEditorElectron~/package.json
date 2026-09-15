@@ -21,13 +21,8 @@
     "files": [
       "main.js",
       "preload.js",
+      "persona-editor.html",
       "package.json"
-    ],
-    "extraResources": [
-      {
-        "from": "../../StreamingAssets/persona-editor.html",
-        "to": "persona-editor.html"
-      }
     ],
     "directories": {
       "output": "dist"
