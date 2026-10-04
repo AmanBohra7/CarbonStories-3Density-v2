@@ -50,11 +50,16 @@ namespace CarbonStories
         }
 
         public DJScreen HomeScreen;
+        public DJScreen LoginScreen;
+        public DJScreen EntryQuestionScreen;
+        public DJScreen ExitQuestionScreen;
         public DJScreen SelectionScreen;
         public DJScreen InfoScreen;
         public DJScreen TutorialScreen;
         public DJScreen ScenarioScreen;
         public DJScreen ResultScreen;
+        public string SubmittedLoginCode { get; private set; }
+        private bool loginCodeSubmitted;
 
         [Space(10)]
         [ReadOnly] [SerializeField] Persona currentPersona;
@@ -73,6 +78,37 @@ namespace CarbonStories
         public void GoToHomeScreen()
         {
             DJScreenHandler.Instance.LoadScreen(HomeScreen.GetInfo());
+        }
+
+        public void GoToLoginScreen()
+        {
+            loginCodeSubmitted = false;
+            SubmittedLoginCode = null;
+            LoadScreen(LoginScreen);
+        }
+
+        public void SubmitLoginCode(string code)
+        {
+            if (loginCodeSubmitted || string.IsNullOrEmpty(code) || code.Length != 5)
+                return;
+
+            foreach (char digit in code)
+                if (digit < '0' || digit > '9')
+                    return;
+
+            SubmittedLoginCode = code;
+            loginCodeSubmitted = true;
+            GoToEntryQuestionScreen();
+        }
+
+        public void GoToEntryQuestionScreen()
+        {
+            LoadScreen(EntryQuestionScreen);
+        }
+
+        public void GoToExitQuestionScreen()
+        {
+            LoadScreen(ExitQuestionScreen);
         }
 
         public void GoToSelectionScreen()

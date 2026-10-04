@@ -290,6 +290,14 @@
         <button class="block-toggle" type="button" aria-expanded="false"><span><span class="block-title">Tutorial</span><br><span class="block-summary">Tutorial information text</span></span><span class="chevron">⌄</span></button>
         <div class="block-content" hidden><div id="tutorialEditor"></div></div>
       </section>
+      <section class="content-block" data-block="entry-questions">
+        <button class="block-toggle" type="button" aria-expanded="false"><span><span class="block-title">Entry questions</span><br><span class="block-summary">Questions with four options each</span></span><span class="chevron">⌄</span></button>
+        <div class="block-content" hidden><div id="entryQuestionsEditor"></div><button id="addEntryQuestion" type="button">+ Add entry question</button></div>
+      </section>
+      <section class="content-block" data-block="exit-questions">
+        <button class="block-toggle" type="button" aria-expanded="false"><span><span class="block-title">Exit questions</span><br><span class="block-summary">Questions with four options each</span></span><span class="chevron">⌄</span></button>
+        <div class="block-content" hidden><div id="exitQuestionsEditor"></div><button id="addExitQuestion" type="button">+ Add exit question</button></div>
+      </section>
       <section class="content-block" data-block="scenarios">
         <button class="block-toggle" type="button" aria-expanded="false"><span><span class="block-title">Scenario data</span><br><span class="block-summary">Choose a numbered scenario to edit</span></span><span class="chevron">⌄</span></button>
         <div class="block-content" hidden>
@@ -342,6 +350,8 @@
       personaDesignation: document.querySelector('#personaDesignation'),
       introductionPages: document.querySelector('#introductionPages'),
       tutorialEditor: document.querySelector('#tutorialEditor'),
+      entryQuestionsEditor: document.querySelector('#entryQuestionsEditor'),
+      exitQuestionsEditor: document.querySelector('#exitQuestionsEditor'),
       list: document.querySelector('#scenarioList'),
       scenarioPicker: document.querySelector('#scenarioPicker'),
       scenarioCount: document.querySelector('#scenarioCount'),
@@ -363,6 +373,8 @@
         designation: '',
         introduction: newIntroduction(),
         tutorial: { infoText: '' },
+        entryQuestions: [],
+        exitQuestions: [],
         scenarios: []
       };
     }
@@ -391,6 +403,16 @@
         scoreColor: { r: 255, g: 255, b: 255, a: 255 },
         aiResponse: ''
       };
+    }
+
+    function newPersonaQuestion() {
+      return { question: '', options: ['', '', '', ''] };
+    }
+
+    function normalizePersonaQuestion(value) {
+      const source = value && typeof value === 'object' ? value : {};
+      const options = Array.isArray(source.options) ? source.options : [];
+      return { question: String(source.question ?? ''), options: Array.from({ length: 4 }, (_, index) => String(options[index] ?? '')) };
     }
 
     function newScenario() {
@@ -491,6 +513,8 @@
         designation: String(source.designation ?? ''),
         introduction: normalizeIntroduction(source.introduction),
         tutorial: { infoText: String(source.tutorial?.infoText ?? '') },
+        entryQuestions: Array.isArray(source.entryQuestions) ? source.entryQuestions.map(normalizePersonaQuestion) : [],
+        exitQuestions: Array.isArray(source.exitQuestions) ? source.exitQuestions.map(normalizePersonaQuestion) : [],
         scenarios: source.scenarios.map(normalizeScenario)
       };
       persona.scenarios.forEach(scenario => applyScenarioMediaDefaults(scenario, index));
@@ -810,6 +834,33 @@
       );
     }
 
+    function renderPersonaQuestions(persona, key, container) {
+      container.replaceChildren();
+      persona[key].forEach((item, index) => {
+        const card = document.createElement('section');
+        card.className = 'scenario';
+        const heading = document.createElement('h3');
+        heading.textContent = `Question ${index + 1}`;
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.textContent = 'Remove question';
+        remove.addEventListener('click', () => {
+          persona[key].splice(index, 1);
+          setDirty(activePersona);
+          renderPersonaQuestions(persona, key, container);
+        });
+        card.append(heading, remove,
+          field('Question', item.question, value => { item.question = value; setDirty(activePersona); }, { multiline: true, rows: 3 }));
+        for (let optionIndex = 0; optionIndex < 4; optionIndex++) {
+          card.append(field(`Option ${optionIndex + 1}`, item.options[optionIndex], value => {
+            item.options[optionIndex] = value;
+            setDirty(activePersona);
+          }));
+        }
+        container.append(card);
+      });
+    }
+
     function renderScenarioPicker(scenarios) {
       elements.scenarioPicker.replaceChildren();
       scenarios.forEach((scenario, index) => {
@@ -844,6 +895,8 @@
       elements.personaDesignation.value = persona.designation;
       renderIntroduction(persona);
       renderTutorial(persona);
+      renderPersonaQuestions(persona, 'entryQuestions', elements.entryQuestionsEditor);
+      renderPersonaQuestions(persona, 'exitQuestions', elements.exitQuestionsEditor);
       elements.list.replaceChildren();
       updateOverview();
 
@@ -967,6 +1020,18 @@
 
     elements.openFolder.addEventListener('click', openScenariosFolder);
     elements.saveActive.addEventListener('click', saveActive);
+
+    document.querySelector('#addEntryQuestion').addEventListener('click', () => {
+      personas[activePersona].entryQuestions.push(newPersonaQuestion());
+      setDirty(activePersona);
+      renderPersonaQuestions(personas[activePersona], 'entryQuestions', elements.entryQuestionsEditor);
+    });
+
+    document.querySelector('#addExitQuestion').addEventListener('click', () => {
+      personas[activePersona].exitQuestions.push(newPersonaQuestion());
+      setDirty(activePersona);
+      renderPersonaQuestions(personas[activePersona], 'exitQuestions', elements.exitQuestionsEditor);
+    });
 
     elements.personaName.addEventListener('input', () => {
       personas[activePersona].name = elements.personaName.value;

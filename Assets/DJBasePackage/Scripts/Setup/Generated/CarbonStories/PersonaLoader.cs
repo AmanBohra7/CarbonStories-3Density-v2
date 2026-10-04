@@ -32,12 +32,21 @@ namespace CarbonStories
     }
 
     [Serializable]
+    public class PersonaQuestionData
+    {
+        [TextArea] public string question;
+        public string[] options = new string[4];
+    }
+
+    [Serializable]
     public class PersonaData
     {
         public string name;
         public string designation;
         public IntroductionData introduction = new IntroductionData();
         public TutorialData tutorial = new TutorialData();
+        public List<PersonaQuestionData> entryQuestions = new List<PersonaQuestionData>();
+        public List<PersonaQuestionData> exitQuestions = new List<PersonaQuestionData>();
         public List<ScenarioData> scenarios = new List<ScenarioData>();
     }
 
