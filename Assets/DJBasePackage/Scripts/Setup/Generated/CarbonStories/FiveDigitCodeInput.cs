@@ -43,7 +43,16 @@ namespace CarbonStories
         public void Focus()
         {
             if (inputField != null)
+            {
                 inputField.Select();
+                inputField.ActivateInputField();
+            }
+        }
+
+        public void HideKeyboard()
+        {
+            if (inputField != null)
+                inputField.DeactivateInputField();
         }
 
         public void Clear()

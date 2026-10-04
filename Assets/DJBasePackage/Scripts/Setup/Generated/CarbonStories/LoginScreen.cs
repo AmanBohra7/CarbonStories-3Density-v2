@@ -1,4 +1,5 @@
 using Lean.Transition;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -68,6 +69,7 @@ namespace CarbonStories
                 return;
             }
 
+            codeInput.HideKeyboard();
             App.Instance.SubmitLoginCode(codeInput.Code);
         }
 
@@ -88,6 +90,14 @@ namespace CarbonStories
 
         protected override void OnLoadingCompleted()
         {
+            StartCoroutine(FocusInputNextFrame());
+        }
+
+        private IEnumerator FocusInputNextFrame()
+        {
+            yield return null;
+            if (codeInput != null && isActiveAndEnabled)
+                codeInput.Focus();
         }
 
         protected override void OnReset()
@@ -98,6 +108,8 @@ namespace CarbonStories
 
         protected override void OnUnloadingStarted(ScreenLoadingInfo info)
         {
+            if (codeInput != null)
+                codeInput.HideKeyboard();
             loadOut.BeginAllTransitions();
         }
 

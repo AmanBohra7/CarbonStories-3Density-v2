@@ -184,8 +184,6 @@ namespace CarbonStories
             mediaPlayer.OnVideoFailed -= OnVideoEnded;
             mediaPlayer.OnVideoStarted -= OnAnswerVideoStarted;
             mediaPlayer.Stop();
-            if (questionMediaPlayer != null)
-                questionMediaPlayer.Stop();
             StopOptionVideo();
             _selectedOption = null;
             _selectedOptionRef = null;
@@ -397,8 +395,6 @@ namespace CarbonStories
                 mediaPlayer.OnVideoEnded += OnVideoEnded;
                 mediaPlayer.OnVideoFailed += OnVideoEnded;
                 mediaPlayer.OnVideoStarted += OnAnswerVideoStarted;
-                if (questionMediaPlayer != null)
-                    questionMediaPlayer.Stop();
                 PlayConfirmedOptionVideo();
                 mediaPlayer.PlayVideo(_selectedOption.videoPath);
             }));
