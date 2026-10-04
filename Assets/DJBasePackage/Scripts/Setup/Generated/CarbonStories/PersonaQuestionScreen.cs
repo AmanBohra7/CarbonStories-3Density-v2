@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using Lean.Transition;
 using TMPro;
@@ -16,7 +15,9 @@ namespace CarbonStories
         [SerializeField] private TextMeshProUGUI progressText;
         [SerializeField] private TextMeshProUGUI[] optionTexts = new TextMeshProUGUI[4];
         [SerializeField] private UnityEngine.UI.Button[] optionButtons = new UnityEngine.UI.Button[4];
-        [SerializeField] private UnityEngine.UI.Button nextButton;
+        [SerializeField, InspectorName("Continue Button")] private UnityEngine.UI.Button nextButton;
+        [SerializeField] private Color defaultColor = Color.white;
+        [SerializeField] private Color highlightColor = new Color(0.96f, 0.7f, 0.14f, 1f);
         [SerializeField] private DJScreen screenAfterQuestions;
         [SerializeField] private UnityEvent onQuestionsCompleted;
 
@@ -26,24 +27,25 @@ namespace CarbonStories
         private int selectedOption = -1;
         private bool completed;
         private bool acceptingQuestions;
-        private Coroutine pendingAdvance;
 
         public IReadOnlyList<int> Answers => answers;
 
         protected abstract List<QuestionData> GetQuestions(SharedQuestionData data);
-        protected virtual float AutoAdvanceDelaySeconds => -1f;
 
         protected override void Awake()
         {
             base.Awake();
+            if (progressText != null)
+                progressText.gameObject.SetActive(false);
             for (int i = 0; i < 4 && i < optionButtons.Length; i++)
             {
                 int optionIndex = i;
                 if (optionButtons[i] != null)
+                {
+                    optionButtons[i].transition = UnityEngine.UI.Selectable.Transition.None;
                     optionButtons[i].onClick.AddListener(() => SelectOption(optionIndex));
+                }
             }
-            if (nextButton != null)
-                nextButton.onClick.AddListener(NextQuestion);
         }
 
         protected override void OnLoadingStarted(ScreenLoadingInfo info)
@@ -69,8 +71,8 @@ namespace CarbonStories
         private void ShowCurrentQuestion()
         {
             QuestionData current = questions[questionIndex];
-            if (questionText != null) questionText.text = current?.question ?? string.Empty;
-            if (progressText != null) progressText.text = $"{questionIndex + 1} / {questions.Count}";
+            if (questionText != null)
+                questionText.text = $"Question {questionIndex + 1} :\n{current?.question ?? string.Empty}";
             selectedOption = -1;
             if (nextButton != null) nextButton.interactable = false;
             for (int i = 0; i < 4; i++)
@@ -81,35 +83,30 @@ namespace CarbonStories
                 if (i < optionButtons.Length && optionButtons[i] != null)
                     optionButtons[i].interactable = !string.IsNullOrWhiteSpace(option);
             }
+            UpdateOptionColors();
         }
 
         public void SelectOption(int index)
         {
-            if (!acceptingQuestions || completed || pendingAdvance != null || questions == null || index < 0 || index >= 4) return;
+            if (!acceptingQuestions || completed || questions == null || index < 0 || index >= 4) return;
             QuestionData current = questions[questionIndex];
             if (current?.options == null || index >= current.options.Length ||
                 string.IsNullOrWhiteSpace(current.options[index])) return;
             selectedOption = index;
             if (nextButton != null) nextButton.interactable = true;
-            if (AutoAdvanceDelaySeconds >= 0f)
-            {
-                for (int i = 0; i < optionButtons.Length; i++)
-                    if (optionButtons[i] != null) optionButtons[i].interactable = false;
-                pendingAdvance = StartCoroutine(AdvanceAfterDelay());
-            }
+            UpdateOptionColors();
         }
 
-        private IEnumerator AdvanceAfterDelay()
+        private void UpdateOptionColors()
         {
-            yield return new WaitForSeconds(AutoAdvanceDelaySeconds);
-            pendingAdvance = null;
-            NextQuestion();
+            for (int i = 0; i < optionButtons.Length; i++)
+                if (optionButtons[i] != null && optionButtons[i].targetGraphic != null)
+                    optionButtons[i].targetGraphic.color = i == selectedOption ? highlightColor : defaultColor;
         }
 
-        public void NextQuestion()
+        public void SubmitAnswer()
         {
             if (!acceptingQuestions || completed || questions == null || selectedOption < 0) return;
-            CancelPendingAdvance();
             answers.Add(selectedOption);
             questionIndex++;
             if (questionIndex < questions.Count) ShowCurrentQuestion();
@@ -127,7 +124,6 @@ namespace CarbonStories
 
         private void ResetQuestions()
         {
-            CancelPendingAdvance();
             acceptingQuestions = false;
             answers.Clear();
             questions = null;
@@ -139,23 +135,17 @@ namespace CarbonStories
             if (nextButton != null) nextButton.interactable = false;
             for (int i = 0; i < optionButtons.Length; i++)
                 if (optionButtons[i] != null) optionButtons[i].interactable = false;
+            UpdateOptionColors();
         }
 
         protected override void OnLoadingCompleted() { }
         protected override void OnReset() => ResetQuestions();
         protected override void OnUnloadingStarted(ScreenLoadingInfo info)
         {
-            CancelPendingAdvance();
             acceptingQuestions = false;
             loadOut.BeginAllTransitions();
         }
         protected override void OnUnloadingCompleted() { }
 
-        private void CancelPendingAdvance()
-        {
-            if (pendingAdvance == null) return;
-            StopCoroutine(pendingAdvance);
-            pendingAdvance = null;
-        }
     }
 }
