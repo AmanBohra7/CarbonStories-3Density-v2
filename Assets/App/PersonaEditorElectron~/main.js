@@ -209,7 +209,7 @@ app.whenReady().then(async () => {
       title: `Replace ${path.basename(destination)}`,
       properties: ['openFile'],
       filters: [
-        { name: 'Media', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'mp4', 'webm', 'mov', 'm4v'] },
+        { name: 'Media', extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'mp4', 'webm', 'mov', 'm4v', 'mp3', 'wav', 'ogg'] },
         { name: 'Same file type', extensions: extension ? [extension.slice(1)] : ['*'] }
       ]
     });

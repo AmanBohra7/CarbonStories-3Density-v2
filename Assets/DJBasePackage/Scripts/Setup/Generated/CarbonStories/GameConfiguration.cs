@@ -12,6 +12,8 @@ namespace CarbonStories
     {
         public string stampIqGameCode = "";
         public float questionWaitTime = 60f;
+        public string backgroundMusic = "bg.mp3";
+        public string timerSound = "timer.mp3";
         public List<string> tutorialVideos = new List<string>();
         public List<string> resultVideos = new List<string>();
 

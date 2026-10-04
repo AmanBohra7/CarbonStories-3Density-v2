@@ -17,9 +17,6 @@ namespace CarbonStories
         [SerializeField] private TextMeshProUGUI gradeText;
         [SerializeField] private TextMeshProUGUI descriptionText;
         [SerializeField] private UnityEngine.UI.Button continueButton;
-        private bool resultSynchronized;
-        private bool resultBusy;
-        private string resultDescription;
 
         [Header("Media")]
         [SerializeField] private CustomMediaPlayer customMediaPlayer;
@@ -39,32 +36,13 @@ namespace CarbonStories
             customMediaPlayer?.Stop();
             UpdateResults();
             loadIn.BeginAllTransitions();
-            resultSynchronized = false;
-            SubmitResult();
-        }
-
-        private void SubmitResult()
-        {
-            if (resultBusy) return;
-            resultBusy = true;
-            if (continueButton != null) continueButton.interactable = false;
-            if (descriptionText != null) descriptionText.text = resultDescription + "\nSaving your result...";
-            App.Instance.SubmitResultAndComplete((success, error) =>
-            {
-                resultBusy = false;
-                resultSynchronized = success;
-                if (continueButton != null) continueButton.interactable = true;
-                if (descriptionText != null)
-                    descriptionText.text = success ? resultDescription :
-                        resultDescription + "\n" + error + " Tap the button to retry.";
-            });
+            if (continueButton != null) continueButton.interactable = true;
         }
 
         public void OnContinuePressed()
         {
-            if (resultBusy) return;
-            if (resultSynchronized) App.Instance.RestartApplication();
-            else SubmitResult();
+            if (continueButton != null) continueButton.interactable = false;
+            App.Instance.GoToExitQuestionScreen();
         }
 
         private void UpdateResults()
@@ -76,7 +54,6 @@ namespace CarbonStories
             string grade = gradeIndex == 0 ? "A+" : gradeIndex == 1 ? "B+" : "C+";
             if (descriptionText != null)
                 descriptionText.text = App.Instance.ResultDescriptions.GetDescription(grade);
-            resultDescription = descriptionText != null ? descriptionText.text : string.Empty;
 
             if (totalScoreText != null)
                 totalScoreText.text = $"{totalScore}";

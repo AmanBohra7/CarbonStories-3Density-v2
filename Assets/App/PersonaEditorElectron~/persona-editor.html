@@ -322,6 +322,8 @@
     let sharedQuestions = { entryQuestions: [], exitQuestions: [] };
     let configuration = {
   "questionWaitTime": 60,
+  "backgroundMusic": "bg.mp3",
+  "timerSound": "timer.mp3",
   "tutorialVideos": [
     "Tutorials/0.mp4",
     "Tutorials/1.mp4",
@@ -1152,6 +1154,11 @@
       const editor = document.querySelector('#configEditor');
       editor.replaceChildren(field('Question wait time (seconds)', configuration.questionWaitTime,
         value => { configuration.questionWaitTime = value; setConfigDirty(); }, { type: 'number', min: 1, step: 1 }));
+      const audio = document.createElement('h3'); audio.textContent = 'Audio'; editor.append(audio);
+      editor.append(assetField('Background music', configuration.backgroundMusic,
+        value => { configuration.backgroundMusic = value; setConfigDirty(); }, { placeholder: 'bg.mp3' }),
+        assetField('Scenario timer sound', configuration.timerSound,
+          value => { configuration.timerSound = value; setConfigDirty(); }, { placeholder: 'timer.mp3' }));
       const tutorials = document.createElement('h3'); tutorials.textContent = 'Tutorials'; editor.append(tutorials);
       configuration.tutorialVideos.forEach((video, index) => editor.append(assetField('Page ' + index + ' video', video,
         value => { configuration.tutorialVideos[index] = value; setConfigDirty(); })));
@@ -1187,6 +1194,8 @@
         const configText = await read('config.json');
         const descriptionText = await read('Results/descriptions.json');
         const next = configText ? JSON.parse(configText) : configuration;
+        if (typeof next.backgroundMusic !== 'string') next.backgroundMusic = 'bg.mp3';
+        if (typeof next.timerSound !== 'string') next.timerSound = 'timer.mp3';
         const descriptions = descriptionText ? JSON.parse(descriptionText) : resultDescriptions;
         if (!Array.isArray(next.tutorialVideos) || !next.tutorialVideos.every(value => typeof value === 'string') ||
             !Array.isArray(next.resultVideos) || next.resultVideos.length !== 3 || !next.resultVideos.every(value => typeof value === 'string') ||

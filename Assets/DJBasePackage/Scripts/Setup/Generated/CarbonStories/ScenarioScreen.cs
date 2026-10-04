@@ -108,6 +108,7 @@ namespace CarbonStories
 
         private void Update()
         {
+            if (App.Instance != null) App.Instance.SetScenarioTimerAudio(_timerRunning);
             if (!_timerRunning)
                 return;
 
@@ -117,6 +118,7 @@ namespace CarbonStories
                 return;
 
             _timerRunning = false;
+            App.Instance.SetScenarioTimerAudio(false);
             if (!_answerConfirmed)
             {
                 confirmationPopup.Hide();
@@ -458,12 +460,14 @@ namespace CarbonStories
         protected override void OnReset()
         {
             _timerRunning = false;
+            App.Instance.SetScenarioTimerAudio(false);
             StopOptionVideo();
         }
 
         protected override void OnUnloadingStarted(ScreenLoadingInfo info)
         {
             _timerRunning = false;
+            App.Instance.SetScenarioTimerAudio(false);
             _playingQuestionVideo = false;
             mediaPlayer.OnVideoEnded -= OnQuestionVideoEnded;
             mediaPlayer.OnVideoFailed -= OnQuestionVideoEnded;

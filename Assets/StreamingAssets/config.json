@@ -1,6 +1,8 @@
 {
   "stampIqGameCode": "carbon-stories",
   "questionWaitTime": 60,
+  "backgroundMusic": "bg.mp3",
+  "timerSound": "timer.mp3",
   "tutorialVideos": [
     "Tutorials/0.mp4",
     "Tutorials/1.mp4",

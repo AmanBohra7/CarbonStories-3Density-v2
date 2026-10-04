@@ -11,6 +11,7 @@ namespace CarbonStories
         public LeanMethod loadIn;
         public LeanMethod loadOut;
 
+        [SerializeField] private GameObject animatedPanel;
         [SerializeField] private TextMeshProUGUI questionText;
         [SerializeField] private TextMeshProUGUI progressText;
         [SerializeField] private TextMeshProUGUI[] optionTexts = new TextMeshProUGUI[4];
@@ -70,6 +71,7 @@ namespace CarbonStories
 
         private void ShowCurrentQuestion()
         {
+            if (animatedPanel != null) animatedPanel.SetActive(false);
             QuestionData current = questions[questionIndex];
             if (questionText != null)
                 questionText.text = $"Question {questionIndex + 1} :\n{current?.question ?? string.Empty}";
@@ -84,6 +86,7 @@ namespace CarbonStories
                     optionButtons[i].interactable = !string.IsNullOrWhiteSpace(option);
             }
             UpdateOptionColors();
+            if (animatedPanel != null) animatedPanel.SetActive(true);
         }
 
         public void SelectOption(int index)
@@ -125,6 +128,7 @@ namespace CarbonStories
         private void ResetQuestions()
         {
             acceptingQuestions = false;
+            if (animatedPanel != null) animatedPanel.SetActive(false);
             answers.Clear();
             questions = null;
             questionIndex = 0;
@@ -143,6 +147,7 @@ namespace CarbonStories
         protected override void OnUnloadingStarted(ScreenLoadingInfo info)
         {
             acceptingQuestions = false;
+            if (animatedPanel != null) animatedPanel.SetActive(false);
             loadOut.BeginAllTransitions();
         }
         protected override void OnUnloadingCompleted() { }
