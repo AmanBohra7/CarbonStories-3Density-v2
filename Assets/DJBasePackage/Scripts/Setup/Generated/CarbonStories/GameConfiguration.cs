@@ -10,6 +10,7 @@ namespace CarbonStories
     [Serializable]
     public class GameConfiguration
     {
+        public string stampIqGameCode = "";
         public float questionWaitTime = 60f;
         public List<string> tutorialVideos = new List<string>();
         public List<string> resultVideos = new List<string>();

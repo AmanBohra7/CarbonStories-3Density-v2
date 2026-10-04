@@ -3610,6 +3610,7 @@ MonoBehaviour:
   loadOut: {fileID: 798344867}
   codeInput: {fileID: 1245265222}
   submitButton: {fileID: 2123248637}
+  statusText: {fileID: 1231186646}
   onCodeCompleted:
     m_PersistentCalls:
       m_Calls: []
@@ -22040,9 +22041,9 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1672029531}
-        m_TargetAssemblyTypeName: CarbonStories.App, Assembly-CSharp
-        m_MethodName: RestartApplication
+      - m_Target: {fileID: 1083291416}
+        m_TargetAssemblyTypeName: CarbonStories.ResultScreen, Assembly-CSharp
+        m_MethodName: OnContinuePressed
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -23978,6 +23979,7 @@ MonoBehaviour:
   - {fileID: 1736699404}
   gradeText: {fileID: 1516419200}
   descriptionText: {fileID: 515580310}
+  continueButton: {fileID: 965221651}
   customMediaPlayer: {fileID: 1139887648}
   aPlusMinimumScore: 32
   bPlusMinimumScore: 24

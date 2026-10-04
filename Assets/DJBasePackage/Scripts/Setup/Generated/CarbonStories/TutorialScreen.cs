@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Lean.Transition;
+using TMPro;
 
 namespace CarbonStories
 {
@@ -13,6 +14,23 @@ namespace CarbonStories
 
         [Header("Media")]
         [SerializeField] private CustomMediaPlayer customMediaPlayer;
+        private TextMeshProUGUI apiErrorText;
+        private string originalApiErrorText;
+
+        public void ShowStartError(string message)
+        {
+            if (apiErrorText == null)
+            {
+                foreach (TextMeshProUGUI text in GetComponentsInChildren<TextMeshProUGUI>(true))
+                    if (text.gameObject.activeInHierarchy && text.gameObject.name == "Answer")
+                    {
+                        apiErrorText = text;
+                        originalApiErrorText = text.text;
+                        break;
+                    }
+            }
+            if (apiErrorText != null) apiErrorText.text = originalApiErrorText + "\n" + message;
+        }
 
         protected override void OnLoadingStarted(ScreenLoadingInfo info)
         {
@@ -43,6 +61,8 @@ namespace CarbonStories
 
         private void ShowPage(int index)
         {
+            if (apiErrorText != null) apiErrorText.text = originalApiErrorText;
+            apiErrorText = null;
             if (tutorialPages == null || tutorialPages.Count == 0)
             {
                 currentIndex = 0;
