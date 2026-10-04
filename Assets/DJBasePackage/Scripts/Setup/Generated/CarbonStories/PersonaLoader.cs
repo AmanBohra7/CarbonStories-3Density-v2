@@ -49,7 +49,7 @@ namespace CarbonStories
     }
 
     /// <summary>
-    /// Preloads all persona data, option icons, and question images from StreamingAssets at startup.
+    /// Preloads persona data and option icons from StreamingAssets at startup.
     /// </summary>
     public class PersonaLoader : MonoBehaviour
     {
@@ -240,21 +240,6 @@ namespace CarbonStories
                 ScenarioData scenario = personaData.scenarios[scenarioIndex];
                 Option[] options = GetOptions(scenario);
 
-                if (!string.IsNullOrWhiteSpace(scenario.questionImagePath))
-                {
-                    Sprite questionImage = null;
-                    requestError = null;
-                    yield return LoadSprite(
-                        CombineStreamingAssetsPath(scenario.questionImagePath),
-                        value => questionImage = value,
-                        error => requestError = error);
-
-                    if (!string.IsNullOrEmpty(requestError))
-                        Debug.LogWarning(requestError);
-                    else
-                        scenario.questionImage = questionImage;
-                }
-
                 for (int optionIndex = 0; optionIndex < options.Length; optionIndex++)
                 {
                     string iconPath = iconPaths[scenarioIndex][optionIndex];
@@ -348,8 +333,7 @@ namespace CarbonStories
                 iconPaths.Add(paths);
             }
 
-            // Question video paths deserialize with each scenario. Videos are streamed
-            // by ScenarioScreen on demand; question images are preloaded above.
+            // Question videos are streamed by ScenarioScreen on demand.
             personaData = personaJson.ToObject<PersonaData>()
                 ?? throw new FormatException("Persona data could not be deserialized.");
 

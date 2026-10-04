@@ -29,8 +29,7 @@
       "number": 1,
       "question": "The cement plant's emissions have increased significantly over the past year. Management knows that emissions are coming from fuel use, electricity consumption, and clinker production, but they do not know which source contributes the most or where to focus their investments. What should the plant do first to identify the biggest opportunities for carbon reduction?",
       "hint": "The plant knows its emissions are coming from several areas, but not which one matters most. Before investing in any technology, first understand where the biggest opportunities for reduction actually are.",
-      "questionImagePath": "Personas/persona_1/scenarios/1/images/question_image.png",
-      "questionVideoPath": "Personas/persona_1/scenarios/1/Scenario 1.mp4",
+      "questionVideoPath": "Personas/persona_1/scenarios/1/videos/question_video.mp4",
       "option1": {
         "icon": "Personas/persona_1/scenarios/1/icons/1.png",
         "videoPath": "Personas/persona_1/scenarios/1/videos/Scenario 1 A.mp4",
@@ -81,8 +80,7 @@
       "number": 2,
       "question": "The cement plant's emissions have increased significantly over the past year. Management knows that emissions are coming from fuel use, electricity consumption, and clinker production, but they do not know which source contributes the most or where to focus their investments. What should the plant do first to identify the biggest opportunities for carbon reduction?",
       "hint": "The plant knows its emissions are coming from several areas, but not which one matters most. Before investing in any technology, first understand where the biggest opportunities for reduction actually are.",
-      "questionImagePath": "Personas/persona_1/scenarios/2/images/question_image.png",
-      "questionVideoPath": "Personas/persona_1/scenarios/2/Scenario 2.mp4",
+      "questionVideoPath": "Personas/persona_1/scenarios/2/videos/question_video.mp4",
       "option1": {
         "icon": "Personas/persona_1/scenarios/2/icons/1.png",
         "videoPath": "Personas/persona_1/scenarios/2/videos/Scenario 2 A.mp4",
@@ -133,8 +131,7 @@
       "number": 3,
       "question": "The cement plant's emissions have increased significantly over the past year. Management knows that emissions are coming from fuel use, electricity consumption, and clinker production, but they do not know which source contributes the most or where to focus their investments. What should the plant do first to identify the biggest opportunities for carbon reduction?",
       "hint": "The plant knows its emissions are coming from several areas, but not which one matters most. Before investing in any technology, first understand where the biggest opportunities for reduction actually are.",
-      "questionImagePath": "Personas/persona_1/scenarios/3/images/question_image.png",
-      "questionVideoPath": "Personas/persona_1/scenarios/3/Scenario 3.mp4",
+      "questionVideoPath": "Personas/persona_1/scenarios/3/videos/question_video.mp4",
       "option1": {
         "icon": "Personas/persona_1/scenarios/3/icons/1.png",
         "videoPath": "Personas/persona_1/scenarios/3/videos/Scenario 3 A.mp4",
@@ -185,8 +182,7 @@
       "number": 4,
       "question": "The cement plant's emissions have increased significantly over the past year. Management knows that emissions are coming from fuel use, electricity consumption, and clinker production, but they do not know which source contributes the most or where to focus their investments. What should the plant do first to identify the biggest opportunities for carbon reduction?",
       "hint": "The plant knows its emissions are coming from several areas, but not which one matters most. Before investing in any technology, first understand where the biggest opportunities for reduction actually are.",
-      "questionImagePath": "Personas/persona_1/scenarios/4/images/question_image.png",
-      "questionVideoPath": "Personas/persona_1/scenarios/4/Scenario 4.mp4",
+      "questionVideoPath": "Personas/persona_1/scenarios/4/videos/question_video.mp4",
       "option1": {
         "icon": "Personas/persona_1/scenarios/4/icons/1.png",
         "videoPath": "Personas/persona_1/scenarios/4/videos/Scenario 4 A.mp4",

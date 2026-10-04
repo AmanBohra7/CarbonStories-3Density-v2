@@ -28,9 +28,7 @@ namespace CarbonStories
         public int number;
         public string question;
         public string hint;
-        public string questionImagePath;
         public string questionVideoPath;
-        public Sprite questionImage;
         public Option option1;
         public Option option2;  
         public Option option3;  
@@ -62,7 +60,6 @@ namespace CarbonStories
         [Space(10)]
         [SerializeField] TextMeshProUGUI questionNumber;
         [SerializeField] TextMeshProUGUI question;
-        [SerializeField] Image questionImage;
         [SerializeField] TextMeshProUGUI hintText;
         [SerializeField] OptionRef option1;
         [SerializeField] OptionRef option2;
@@ -81,6 +78,7 @@ namespace CarbonStories
 
         [Space(10)]
         [SerializeField] CustomMediaPlayer mediaPlayer;
+        public CustomMediaPlayer questionMediaPlayer;
         [SerializeField] CustomMediaPlayer optionMediaPlayer;
         [SerializeField] CanvasGroup optionVideoCanvasGroup;
         [SerializeField, Min(0f)] float optionVideoFadeDuration = 0.35f;
@@ -97,7 +95,6 @@ namespace CarbonStories
         private Option _selectedOption;
         private OptionRef _selectedOptionRef;
         private int _currentQuestionIndex;
-        private bool _playingQuestionVideo;
         private bool _optionVideoPlaying;
         private int _optionCanvasTweenId = -1;
         private float _remainingSeconds;
@@ -186,9 +183,9 @@ namespace CarbonStories
             mediaPlayer.OnVideoEnded -= OnVideoEnded;
             mediaPlayer.OnVideoFailed -= OnVideoEnded;
             mediaPlayer.OnVideoStarted -= OnAnswerVideoStarted;
-            mediaPlayer.OnVideoEnded -= OnQuestionVideoEnded;
-            mediaPlayer.OnVideoFailed -= OnQuestionVideoEnded;
             mediaPlayer.Stop();
+            if (questionMediaPlayer != null)
+                questionMediaPlayer.Stop();
             StopOptionVideo();
             _selectedOption = null;
             _selectedOptionRef = null;
@@ -196,38 +193,13 @@ namespace CarbonStories
             hintText.text = scenario.hint;
             questionNumber.text = $"Scenario {scenario.number}";
             question.text = scenario.question;
-            if (questionImage != null)
-            {
-                questionImage.sprite = scenario.questionImage;
-                questionImage.enabled = scenario.questionImage != null;
-            }
             SetOptionsVisible(false);
 
             animatedPanelCG.alpha = 1;
             animatedPanel.SetActive(true);
 
-            _playingQuestionVideo = !string.IsNullOrWhiteSpace(scenario.questionVideoPath);
-            if (_playingQuestionVideo)
-            {
-                mediaPlayer.OnVideoEnded += OnQuestionVideoEnded;
-                mediaPlayer.OnVideoFailed += OnQuestionVideoEnded;
-                mediaPlayer.PlayVideo(scenario.questionVideoPath);
-            }
-            else
-            {
-                ShowOptions();
-            }
-
-        }
-
-        private void OnQuestionVideoEnded()
-        {
-            if (!_playingQuestionVideo)
-                return;
-
-            _playingQuestionVideo = false;
-            mediaPlayer.OnVideoEnded -= OnQuestionVideoEnded;
-            mediaPlayer.OnVideoFailed -= OnQuestionVideoEnded;
+            if (questionMediaPlayer != null && !string.IsNullOrWhiteSpace(scenario.questionVideoPath))
+                questionMediaPlayer.PlayVideo(scenario.questionVideoPath, true);
             ShowOptions();
         }
 
@@ -256,7 +228,7 @@ namespace CarbonStories
 
         public void OnOptionSelected(int index)
         {
-            if (_playingQuestionVideo || !_timerRunning || _answerConfirmed || _advancing)
+            if (!_timerRunning || _answerConfirmed || _advancing)
                 return;
             ScenarioData scenario = personaLoader.Personas[App.Instance.ActivePersona]
                 .scenarios[_currentQuestionIndex];
@@ -425,6 +397,8 @@ namespace CarbonStories
                 mediaPlayer.OnVideoEnded += OnVideoEnded;
                 mediaPlayer.OnVideoFailed += OnVideoEnded;
                 mediaPlayer.OnVideoStarted += OnAnswerVideoStarted;
+                if (questionMediaPlayer != null)
+                    questionMediaPlayer.Stop();
                 PlayConfirmedOptionVideo();
                 mediaPlayer.PlayVideo(_selectedOption.videoPath);
             }));
@@ -462,15 +436,16 @@ namespace CarbonStories
             _timerRunning = false;
             App.Instance.SetScenarioTimerAudio(false);
             StopOptionVideo();
+            if (questionMediaPlayer != null)
+                questionMediaPlayer.Stop();
         }
 
         protected override void OnUnloadingStarted(ScreenLoadingInfo info)
         {
             _timerRunning = false;
             App.Instance.SetScenarioTimerAudio(false);
-            _playingQuestionVideo = false;
-            mediaPlayer.OnVideoEnded -= OnQuestionVideoEnded;
-            mediaPlayer.OnVideoFailed -= OnQuestionVideoEnded;
+            if (questionMediaPlayer != null)
+                questionMediaPlayer.Stop();
             mediaPlayer.OnVideoEnded -= OnVideoEnded;
             mediaPlayer.OnVideoFailed -= OnVideoEnded;
             mediaPlayer.OnVideoStarted -= OnAnswerVideoStarted;

@@ -421,7 +421,6 @@
         number,
         question: '',
         hint: '',
-        questionImagePath: '',
         questionVideoPath: '',
         option1: newOption(),
         option2: newOption(),
@@ -467,7 +466,6 @@
         number: Number(scenario.number) || index + 1,
         question: String(scenario.question ?? ''),
         hint: String(scenario.hint ?? ''),
-        questionImagePath: String(scenario.questionImagePath ?? ''),
         questionVideoPath: String(scenario.questionVideoPath ?? ''),
         option1: normalizeOption(scenario.option1),
         option2: normalizeOption(scenario.option2),
@@ -522,8 +520,7 @@
     function applyScenarioMediaDefaults(scenario, personaIndex) {
       const number = Number(scenario.number) || 1;
       const root = `Personas/persona_${personaIndex + 1}/scenarios/${number}`;
-      scenario.questionImagePath ||= `${root}/images/question_image.png`;
-      scenario.questionVideoPath ||= `${root}/Scenario ${number}.mp4`;
+      scenario.questionVideoPath ||= `${root}/videos/question_video.mp4`;
       [scenario.option1, scenario.option2, scenario.option3].forEach((option, optionIndex) => {
         if (!option) return;
         if (!option.icon || /^Personas\/Icons\//i.test(option.icon)) {
@@ -770,17 +767,12 @@
 
       const mediaHeading = document.createElement('div');
       mediaHeading.className = 'section-heading';
-      mediaHeading.innerHTML = '<h4>Question media</h4><p>Image displayed with the question and video played before decision options appear.</p>';
+      mediaHeading.innerHTML = '<h4>Question media</h4><p>Video loops while the decision options are shown.</p>';
       card.append(mediaHeading, assetField(
-        'Question image path',
-        scenario.questionImagePath,
-        value => { scenario.questionImagePath = value; changed(); },
-        { placeholder: 'Personas/persona_1/scenarios/1/images/question_image.png' }
-      ), assetField(
         'Question video path',
         scenario.questionVideoPath,
         value => { scenario.questionVideoPath = value; changed(); },
-        { placeholder: 'Personas/persona_1/scenarios/1/Scenario 1.mp4' }
+        { placeholder: 'Personas/persona_1/scenarios/1/videos/question_video.mp4' }
       ));
 
       const optionsHeading = document.createElement('div');
@@ -1047,7 +1039,6 @@
         ? normalizeScenario(JSON.parse(JSON.stringify(current)), scenarios.length)
         : newScenario();
       scenario.number = scenarios.length + 1;
-      scenario.questionImagePath = '';
       scenario.questionVideoPath = '';
       [scenario.option1, scenario.option2, scenario.option3].forEach(option => {
         option.icon = '';

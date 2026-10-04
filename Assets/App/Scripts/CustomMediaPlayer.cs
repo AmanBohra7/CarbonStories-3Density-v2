@@ -68,7 +68,7 @@ public class CustomMediaPlayer : MonoBehaviour
     /// Loads and plays a path relative to StreamingAssets. A newer call
     /// immediately supersedes any load or transition already in progress.
     /// </summary>
-    public void PlayVideo(string relativeVideoPath)
+    public void PlayVideo(string relativeVideoPath, bool loop = false)
     {
         if (string.IsNullOrWhiteSpace(relativeVideoPath))
         {
@@ -98,7 +98,7 @@ public class CustomMediaPlayer : MonoBehaviour
         SetCanvasState(target, 0f, false);
         target.canvasGroup.transform.SetAsLastSibling();
         StopAndRewind(target.mediaPlayer);
-        target.mediaPlayer.Loop = false;
+        target.mediaPlayer.Loop = loop;
         target.mediaPlayer.AudioVolume = crossFadeAudio ? 0f : playbackVolume;
 
         bool opened = target.mediaPlayer.OpenMedia(
