@@ -2,6 +2,7 @@ using NaughtyAttributes;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using CarbonStories;
 
 [RequireComponent(typeof(RectTransform))]
 public class RayCastEventDetecter : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
@@ -32,7 +33,7 @@ public class RayCastEventDetecter : MonoBehaviour, IPointerEnterHandler, IPointe
     {
         if (btn != null && !btn.interactable) return; 
         Debug.Log("OnPointerDown");
-        if(pressed) AudioSource.PlayClipAtPoint(pressed, Vector3.one, 0.75f);
+        if (pressed && SettingController.SfxEnabled) AudioSource.PlayClipAtPoint(pressed, Vector3.one, 0.75f);
         LeanTween.cancel(_tweenIndex);
         _tweenIndex = LeanTween.scale(gameObject, _initialScale + Vector3.one * pressedScaleFactor, tweenTime).setEase(tweenType).id;
     }
@@ -53,7 +54,7 @@ public class RayCastEventDetecter : MonoBehaviour, IPointerEnterHandler, IPointe
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (btn != null && !btn.interactable) return;
-        if (hover) AudioSource.PlayClipAtPoint(hover, Vector3.one, 0.75f);
+        if (hover && SettingController.SfxEnabled) AudioSource.PlayClipAtPoint(hover, Vector3.one, 0.75f);
         LeanTween.cancel(_tweenIndex);
         _tweenIndex = LeanTween.scale(gameObject, _initialScale +  Vector3.one * hoverScaleFactor, tweenTime).setEase(tweenType).id;
     }

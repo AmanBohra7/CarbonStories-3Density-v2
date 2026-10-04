@@ -60,7 +60,14 @@ namespace CarbonStories
             timerAudio.playOnAwake = false;
             backgroundAudio.spatialBlend = 0f;
             timerAudio.spatialBlend = 0f;
+            ApplyAudioSettings();
             StartCoroutine(LoadConfiguration());
+        }
+
+        public void ApplyAudioSettings()
+        {
+            if (backgroundAudio != null) backgroundAudio.mute = !SettingController.MusicEnabled;
+            if (timerAudio != null) timerAudio.mute = !SettingController.SfxEnabled;
         }
 
         private System.Collections.IEnumerator LoadAudio(string relativePath, AudioSource source, bool background)

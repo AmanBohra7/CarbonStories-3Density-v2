@@ -39,6 +39,7 @@ namespace CarbonStories
         {
             settingsCanvasGroup = GetComponent<CanvasGroup>();
             globalVolume = Mathf.Clamp01(initialVolume);
+            ApplyAudioSettings();
             UpdateVolumeFill();
             UpdateMusicButtons();
             UpdateSfxButtons();
@@ -71,6 +72,11 @@ namespace CarbonStories
             SetSettingsVisible(false);
         }
 
+        public void QuitApplication()
+        {
+            Application.Quit();
+        }
+
         public void SetVolume(float volume)
         {
             float updatedVolume = Mathf.Clamp01(volume);
@@ -82,6 +88,7 @@ namespace CarbonStories
             }
 
             globalVolume = updatedVolume;
+            ApplyAudioSettings();
             UpdateVolumeFill();
             onVolumeChanged.Invoke(globalVolume);
         }
@@ -109,6 +116,7 @@ namespace CarbonStories
         public void SetMusicEnabled(bool isEnabled)
         {
             MusicEnabled = isEnabled;
+            ApplyAudioSettings();
             UpdateMusicButtons();
             onMusicStateChanged.Invoke(MusicEnabled);
         }
@@ -116,6 +124,7 @@ namespace CarbonStories
         public void SetSfxEnabled(bool isEnabled)
         {
             SfxEnabled = isEnabled;
+            ApplyAudioSettings();
             UpdateSfxButtons();
             onSfxStateChanged.Invoke(SfxEnabled);
         }
@@ -125,6 +134,15 @@ namespace CarbonStories
             if (volumeFillImage != null)
             {
                 volumeFillImage.fillAmount = globalVolume;
+            }
+        }
+
+        private static void ApplyAudioSettings()
+        {
+            AudioListener.volume = globalVolume;
+            if (App.Instance != null)
+            {
+                App.Instance.ApplyAudioSettings();
             }
         }
 
