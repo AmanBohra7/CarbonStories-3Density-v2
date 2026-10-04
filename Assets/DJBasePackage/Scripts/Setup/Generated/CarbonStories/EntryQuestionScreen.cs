@@ -8,6 +8,6 @@ namespace CarbonStories
         [SerializeField, Min(0f)] private float secondsBeforeNextQuestion = 2f;
 
         protected override float AutoAdvanceDelaySeconds => secondsBeforeNextQuestion;
-        protected override List<PersonaQuestionData> GetQuestions(PersonaData persona) => persona.entryQuestions;
+        protected override List<QuestionData> GetQuestions(SharedQuestionData data) => data.entryQuestions;
     }
 }

@@ -9,6 +9,7 @@ namespace CarbonStories
         public LeanMethod loadIn;
         public LeanMethod loadOut;
         [SerializeField] private FiveDigitCodeInput codeInput;
+        [SerializeField] private UnityEngine.UI.Button submitButton;
         [SerializeField] private UnityEvent<string> onCodeCompleted = new UnityEvent<string>();
 
         public FiveDigitCodeInput CodeInput => codeInput;
@@ -19,31 +20,35 @@ namespace CarbonStories
             base.Awake();
             if (codeInput == null)
             {
-                Transform panel = transform.Find("Panel");
-                if (panel == null)
-                {
-                    Debug.LogError("LoginScreen needs a Panel for the code input.", this);
-                    return;
-                }
-
-                var inputObject = new GameObject("Five Digit Code Input", typeof(RectTransform));
-                inputObject.transform.SetParent(panel, false);
-                codeInput = inputObject.AddComponent<FiveDigitCodeInput>();
+                Debug.LogError("LoginScreen needs a Five Digit Code Input reference assigned in the scene.", this);
+                return;
             }
 
+            codeInput.OnCodeChanged.AddListener(HandleCodeChanged);
             codeInput.OnCodeCompleted.AddListener(HandleCodeCompleted);
+            HandleCodeChanged(codeInput.Code);
+            if (submitButton == null)
+                Debug.LogError("LoginScreen needs a Submit Button reference assigned in the scene.", this);
         }
 
         private void OnDestroy()
         {
             if (codeInput != null)
+            {
+                codeInput.OnCodeChanged.RemoveListener(HandleCodeChanged);
                 codeInput.OnCodeCompleted.RemoveListener(HandleCodeCompleted);
+            }
+        }
+
+        private void HandleCodeChanged(string code)
+        {
+            if (submitButton != null)
+                submitButton.interactable = codeInput != null && codeInput.IsComplete;
         }
 
         private void HandleCodeCompleted(string code)
         {
             onCodeCompleted.Invoke(code);
-            SubmitCode();
         }
 
         public void SubmitCode()

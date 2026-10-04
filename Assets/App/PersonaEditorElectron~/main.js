@@ -180,7 +180,7 @@ app.whenReady().then(async () => {
   });
 
   function configPath(relativePath) {
-    if (!['config.json', 'Results/descriptions.json'].includes(relativePath)) throw new Error('Invalid config path.');
+    if (!['config.json', 'Results/descriptions.json', 'questions.json'].includes(relativePath)) throw new Error('Invalid config path.');
     return safeAssetPath(relativePath);
   }
   ipcMain.handle('config:read', async (_event, relativePath) => {

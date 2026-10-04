@@ -12,7 +12,6 @@ namespace CarbonStories
         public LeanMethod loadIn;
         public LeanMethod loadOut;
 
-        [SerializeField] private PersonaLoader personaLoader;
         [SerializeField] private TextMeshProUGUI questionText;
         [SerializeField] private TextMeshProUGUI progressText;
         [SerializeField] private TextMeshProUGUI[] optionTexts = new TextMeshProUGUI[4];
@@ -22,7 +21,7 @@ namespace CarbonStories
         [SerializeField] private UnityEvent onQuestionsCompleted;
 
         private readonly List<int> answers = new List<int>();
-        private List<PersonaQuestionData> questions;
+        private List<QuestionData> questions;
         private int questionIndex;
         private int selectedOption = -1;
         private bool completed;
@@ -31,7 +30,7 @@ namespace CarbonStories
 
         public IReadOnlyList<int> Answers => answers;
 
-        protected abstract List<PersonaQuestionData> GetQuestions(PersonaData persona);
+        protected abstract List<QuestionData> GetQuestions(SharedQuestionData data);
         protected virtual float AutoAdvanceDelaySeconds => -1f;
 
         protected override void Awake()
@@ -52,22 +51,16 @@ namespace CarbonStories
             ResetQuestions();
             acceptingQuestions = true;
             loadIn.BeginAllTransitions();
-            if (personaLoader == null || App.Instance == null)
-            {
-                Debug.LogError($"{GetType().Name} requires a PersonaLoader and App.", this);
-                return;
-            }
-            personaLoader.LoadPersonaData(App.Instance.ActivePersona, ShowQuestions,
-                error => Debug.LogError(error, this));
+            StartCoroutine(ConfigurationReader.Load<SharedQuestionData>("questions.json", ShowQuestions));
         }
 
-        private void ShowQuestions(PersonaData persona)
+        private void ShowQuestions(SharedQuestionData data)
         {
             if (!acceptingQuestions) return;
-            questions = GetQuestions(persona);
+            questions = GetQuestions(data);
             if (questions == null || questions.Count == 0)
             {
-                Debug.LogWarning($"{GetType().Name} has no questions for {App.Instance.ActivePersona}.", this);
+                Debug.LogWarning($"{GetType().Name} has no questions in questions.json.", this);
                 return;
             }
             ShowCurrentQuestion();
@@ -75,7 +68,7 @@ namespace CarbonStories
 
         private void ShowCurrentQuestion()
         {
-            PersonaQuestionData current = questions[questionIndex];
+            QuestionData current = questions[questionIndex];
             if (questionText != null) questionText.text = current?.question ?? string.Empty;
             if (progressText != null) progressText.text = $"{questionIndex + 1} / {questions.Count}";
             selectedOption = -1;
@@ -93,7 +86,7 @@ namespace CarbonStories
         public void SelectOption(int index)
         {
             if (!acceptingQuestions || completed || pendingAdvance != null || questions == null || index < 0 || index >= 4) return;
-            PersonaQuestionData current = questions[questionIndex];
+            QuestionData current = questions[questionIndex];
             if (current?.options == null || index >= current.options.Length ||
                 string.IsNullOrWhiteSpace(current.options[index])) return;
             selectedOption = index;

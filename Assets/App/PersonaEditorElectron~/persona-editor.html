@@ -257,8 +257,13 @@
   </header>
 
   <main>
-    <div class="tabs"><button id="showPersonas" class="tab active">Personas</button><button id="showConfig" class="tab">Config</button></div>
+    <div class="tabs"><button id="showPersonas" class="tab active">Personas</button><button id="showQuestions" class="tab">Questions</button><button id="showConfig" class="tab">Config</button></div>
     <section id="configSection" class="content-block" hidden><div class="block-content"><h2>Config</h2><button id="openConfig">Open StreamingAssets folder</button><button id="saveConfig" class="primary" disabled>Save config</button><div id="configEditor"></div></div></section>
+    <section id="questionsSection" hidden>
+      <div class="toolbar"><div><h2>Shared questions</h2><div class="file-note">Used by every persona · questions.json</div></div><div class="actions"><button id="openQuestions">Reload questions</button><button id="saveQuestions" class="primary" disabled>Save questions</button></div></div>
+      <section class="content-block"><div class="block-content"><h2>Entry questions</h2><div id="entryQuestionsEditor"></div><button id="addEntryQuestion" type="button">+ Add entry question</button></div></section>
+      <section class="content-block"><div class="block-content"><h2>Exit questions</h2><div id="exitQuestionsEditor"></div><button id="addExitQuestion" type="button">+ Add exit question</button></div></section>
+    </section>
     <div id="personaSection">
     <div id="tabs" class="tabs"></div>
     <div class="toolbar">
@@ -290,14 +295,6 @@
         <button class="block-toggle" type="button" aria-expanded="false"><span><span class="block-title">Tutorial</span><br><span class="block-summary">Tutorial information text</span></span><span class="chevron">⌄</span></button>
         <div class="block-content" hidden><div id="tutorialEditor"></div></div>
       </section>
-      <section class="content-block" data-block="entry-questions">
-        <button class="block-toggle" type="button" aria-expanded="false"><span><span class="block-title">Entry questions</span><br><span class="block-summary">Questions with four options each</span></span><span class="chevron">⌄</span></button>
-        <div class="block-content" hidden><div id="entryQuestionsEditor"></div><button id="addEntryQuestion" type="button">+ Add entry question</button></div>
-      </section>
-      <section class="content-block" data-block="exit-questions">
-        <button class="block-toggle" type="button" aria-expanded="false"><span><span class="block-title">Exit questions</span><br><span class="block-summary">Questions with four options each</span></span><span class="chevron">⌄</span></button>
-        <div class="block-content" hidden><div id="exitQuestionsEditor"></div><button id="addExitQuestion" type="button">+ Add exit question</button></div>
-      </section>
       <section class="content-block" data-block="scenarios">
         <button class="block-toggle" type="button" aria-expanded="false"><span><span class="block-title">Scenario data</span><br><span class="block-summary">Choose a numbered scenario to edit</span></span><span class="chevron">⌄</span></button>
         <div class="block-content" hidden>
@@ -320,6 +317,9 @@
     let scenariosDirectory = null;
     let configDirectory = null;
     let configDirty = false;
+    let questionsDirty = false;
+    let questionsLoaded = false;
+    let sharedQuestions = { entryQuestions: [], exitQuestions: [] };
     let configuration = {
   "questionWaitTime": 60,
   "tutorialVideos": [
@@ -373,8 +373,6 @@
         designation: '',
         introduction: newIntroduction(),
         tutorial: { infoText: '' },
-        entryQuestions: [],
-        exitQuestions: [],
         scenarios: []
       };
     }
@@ -405,11 +403,11 @@
       };
     }
 
-    function newPersonaQuestion() {
+    function newQuestion() {
       return { question: '', options: ['', '', '', ''] };
     }
 
-    function normalizePersonaQuestion(value) {
+    function normalizeQuestion(value) {
       const source = value && typeof value === 'object' ? value : {};
       const options = Array.isArray(source.options) ? source.options : [];
       return { question: String(source.question ?? ''), options: Array.from({ length: 4 }, (_, index) => String(options[index] ?? '')) };
@@ -513,8 +511,6 @@
         designation: String(source.designation ?? ''),
         introduction: normalizeIntroduction(source.introduction),
         tutorial: { infoText: String(source.tutorial?.infoText ?? '') },
-        entryQuestions: Array.isArray(source.entryQuestions) ? source.entryQuestions.map(normalizePersonaQuestion) : [],
-        exitQuestions: Array.isArray(source.exitQuestions) ? source.exitQuestions.map(normalizePersonaQuestion) : [],
         scenarios: source.scenarios.map(normalizeScenario)
       };
       persona.scenarios.forEach(scenario => applyScenarioMediaDefaults(scenario, index));
@@ -544,7 +540,7 @@
 
     function setDirty(index, value = true) {
       dirty[index] = value;
-      window.personaDesktop?.setDirtyState((configDirty || dirty.some(Boolean)));
+      window.personaDesktop?.setDirtyState(configDirty || questionsDirty || dirty.some(Boolean));
       renderTabs();
       updateSaveButtons();
       updateOverview();
@@ -834,9 +830,9 @@
       );
     }
 
-    function renderPersonaQuestions(persona, key, container) {
+    function renderSharedQuestions(key, container) {
       container.replaceChildren();
-      persona[key].forEach((item, index) => {
+      sharedQuestions[key].forEach((item, index) => {
         const card = document.createElement('section');
         card.className = 'scenario';
         const heading = document.createElement('h3');
@@ -845,16 +841,16 @@
         remove.type = 'button';
         remove.textContent = 'Remove question';
         remove.addEventListener('click', () => {
-          persona[key].splice(index, 1);
-          setDirty(activePersona);
-          renderPersonaQuestions(persona, key, container);
+          sharedQuestions[key].splice(index, 1);
+          setQuestionsDirty();
+          renderSharedQuestions(key, container);
         });
         card.append(heading, remove,
-          field('Question', item.question, value => { item.question = value; setDirty(activePersona); }, { multiline: true, rows: 3 }));
+          field('Question', item.question, value => { item.question = value; setQuestionsDirty(); }, { multiline: true, rows: 3 }));
         for (let optionIndex = 0; optionIndex < 4; optionIndex++) {
           card.append(field(`Option ${optionIndex + 1}`, item.options[optionIndex], value => {
             item.options[optionIndex] = value;
-            setDirty(activePersona);
+            setQuestionsDirty();
           }));
         }
         container.append(card);
@@ -895,8 +891,6 @@
       elements.personaDesignation.value = persona.designation;
       renderIntroduction(persona);
       renderTutorial(persona);
-      renderPersonaQuestions(persona, 'entryQuestions', elements.entryQuestionsEditor);
-      renderPersonaQuestions(persona, 'exitQuestions', elements.exitQuestionsEditor);
       elements.list.replaceChildren();
       updateOverview();
 
@@ -997,7 +991,7 @@
       if (window.personaDesktop) {
         await window.personaDesktop.savePersona(personaFileName(index), JSON.stringify(personas[index], null, 2) + '\n');
         dirty[index] = false;
-        window.personaDesktop.setDirtyState(configDirty || dirty.some(Boolean));
+        window.personaDesktop.setDirtyState(configDirty || questionsDirty || dirty.some(Boolean));
         return;
       }
       const handle = await scenariosDirectory.getFileHandle(personaFileName(index), { create: true });
@@ -1022,15 +1016,15 @@
     elements.saveActive.addEventListener('click', saveActive);
 
     document.querySelector('#addEntryQuestion').addEventListener('click', () => {
-      personas[activePersona].entryQuestions.push(newPersonaQuestion());
-      setDirty(activePersona);
-      renderPersonaQuestions(personas[activePersona], 'entryQuestions', elements.entryQuestionsEditor);
+      sharedQuestions.entryQuestions.push(newQuestion());
+      setQuestionsDirty();
+      renderSharedQuestions('entryQuestions', elements.entryQuestionsEditor);
     });
 
     document.querySelector('#addExitQuestion').addEventListener('click', () => {
-      personas[activePersona].exitQuestions.push(newPersonaQuestion());
-      setDirty(activePersona);
-      renderPersonaQuestions(personas[activePersona], 'exitQuestions', elements.exitQuestionsEditor);
+      sharedQuestions.exitQuestions.push(newQuestion());
+      setQuestionsDirty();
+      renderSharedQuestions('exitQuestions', elements.exitQuestionsEditor);
     });
 
     elements.personaName.addEventListener('input', () => {
@@ -1082,7 +1076,7 @@
     // The desktop shell provides a native close prompt. Keep the browser-only
     // warning for people who open this HTML file directly.
     window.addEventListener('beforeunload', event => {
-      if (window.personaDesktop || !(configDirty || dirty.some(Boolean))) return;
+      if (window.personaDesktop || !(configDirty || questionsDirty || dirty.some(Boolean))) return;
       event.preventDefault();
       event.returnValue = '';
     });
@@ -1097,7 +1091,61 @@
     function setConfigDirty() {
       configDirty = true;
       document.querySelector('#saveConfig').textContent = 'Save config *';
-      window.personaDesktop?.setDirtyState(configDirty || dirty.some(Boolean));
+      window.personaDesktop?.setDirtyState(configDirty || questionsDirty || dirty.some(Boolean));
+    }
+
+    function setQuestionsDirty() {
+      questionsDirty = true;
+      document.querySelector('#saveQuestions').textContent = 'Save questions *';
+      window.personaDesktop?.setDirtyState(configDirty || questionsDirty || dirty.some(Boolean));
+    }
+
+    function renderQuestions() {
+      renderSharedQuestions('entryQuestions', elements.entryQuestionsEditor);
+      renderSharedQuestions('exitQuestions', elements.exitQuestionsEditor);
+    }
+
+    async function loadQuestions() {
+      try {
+        if (!window.personaDesktop && !configDirectory)
+          configDirectory = await window.showDirectoryPicker({ mode: 'readwrite' });
+        if (!window.personaDesktop && configDirectory.name === 'Personas')
+          throw new Error('Select StreamingAssets, which contains questions.json.');
+        let text;
+        if (window.personaDesktop) text = await window.personaDesktop.readConfig('questions.json');
+        else {
+          try { text = await (await (await configFileHandle('questions.json')).getFile()).text(); }
+          catch (error) { if (error.name !== 'NotFoundError') throw error; }
+        }
+        const source = text ? JSON.parse(text.replace(/^\uFEFF/, '')) : {};
+        if (!source || typeof source !== 'object' || Array.isArray(source)) throw new Error('Invalid questions.json.');
+        sharedQuestions = {
+          entryQuestions: Array.isArray(source.entryQuestions) ? source.entryQuestions.map(normalizeQuestion) : [],
+          exitQuestions: Array.isArray(source.exitQuestions) ? source.exitQuestions.map(normalizeQuestion) : []
+        };
+        questionsDirty = !text;
+        questionsLoaded = true;
+        document.querySelector('#saveQuestions').disabled = false;
+        document.querySelector('#saveQuestions').textContent = questionsDirty ? 'Save questions *' : 'Save questions';
+        window.personaDesktop?.setDirtyState(configDirty || questionsDirty || dirty.some(Boolean));
+        renderQuestions();
+        setNotice('Shared questions loaded from StreamingAssets/questions.json.', 'success');
+      } catch (error) { if (error.name !== 'AbortError') setNotice('Could not load questions: ' + error.message, 'error'); }
+    }
+
+    async function saveQuestions() {
+      try {
+        const text = JSON.stringify(sharedQuestions, null, 2) + '\n';
+        if (window.personaDesktop) await window.personaDesktop.saveConfig('questions.json', text);
+        else {
+          const writable = await (await configFileHandle('questions.json', true)).createWritable();
+          await writable.write(text); await writable.close();
+        }
+        questionsDirty = false;
+        document.querySelector('#saveQuestions').textContent = 'Save questions';
+        window.personaDesktop?.setDirtyState(configDirty || dirty.some(Boolean));
+        setNotice('Shared questions saved.', 'success');
+      } catch (error) { setNotice('Could not save questions: ' + error.message, 'error'); }
     }
 
     function renderConfig() {
@@ -1146,7 +1194,7 @@
         configuration = next; resultDescriptions = descriptions; configDirty = !configText || !descriptionText;
         document.querySelector('#saveConfig').disabled = false;
         document.querySelector('#saveConfig').textContent = configDirty ? 'Save config *' : 'Save config';
-        window.personaDesktop?.setDirtyState(configDirty || dirty.some(Boolean));
+        window.personaDesktop?.setDirtyState(configDirty || questionsDirty || dirty.some(Boolean));
         renderConfig(); setNotice('Config loaded from StreamingAssets.', 'success');
       } catch (error) { if (error.name !== 'AbortError') setNotice('Could not load config: ' + error.message, 'error'); }
     }
@@ -1160,23 +1208,29 @@
           else { const writable = await (await configFileHandle(relativePath, true)).createWritable(); await writable.write(text); await writable.close(); }
         }
         configDirty = false; document.querySelector('#saveConfig').textContent = 'Save config';
-        window.personaDesktop?.setDirtyState(dirty.some(Boolean)); setNotice('Config and grade descriptions saved.', 'success');
+        window.personaDesktop?.setDirtyState(questionsDirty || dirty.some(Boolean)); setNotice('Config and grade descriptions saved.', 'success');
       } catch (error) { setNotice('Could not save config: ' + error.message, 'error'); }
     }
 
-    document.querySelector('#showConfig').onclick = () => {
-      elements.openFolder.hidden = true; elements.saveActive.hidden = true;
-      document.querySelector('#personaSection').hidden = true; document.querySelector('#configSection').hidden = false;
-      document.querySelector('#showConfig').classList.add('active'); document.querySelector('#showPersonas').classList.remove('active'); renderConfig();
+    function showSection(section) {
+      elements.openFolder.hidden = section !== 'Personas';
+      elements.saveActive.hidden = section !== 'Personas';
+      const sections = { Personas: 'personaSection', Questions: 'questionsSection', Config: 'configSection' };
+      for (const name of Object.keys(sections)) {
+        document.querySelector(`#${sections[name]}`).hidden = name !== section;
+        document.querySelector(`#show${name}`).classList.toggle('active', name === section);
+      }
+    }
+    document.querySelector('#showConfig').onclick = () => { showSection('Config'); renderConfig(); };
+    document.querySelector('#showPersonas').onclick = () => showSection('Personas');
+    document.querySelector('#showQuestions').onclick = () => { showSection('Questions'); if (!questionsLoaded) loadQuestions(); };
+    document.querySelector('#openQuestions').onclick = () => {
+      if (!questionsDirty || window.confirm('Discard unsaved question changes and reload?')) loadQuestions();
     };
-    document.querySelector('#showPersonas').onclick = () => {
-      elements.openFolder.hidden = false; elements.saveActive.hidden = false;
-      document.querySelector('#personaSection').hidden = false; document.querySelector('#configSection').hidden = true;
-      document.querySelector('#showPersonas').classList.add('active'); document.querySelector('#showConfig').classList.remove('active');
-    };
+    document.querySelector('#saveQuestions').onclick = saveQuestions;
     document.querySelector('#openConfig').onclick = () => { configDirectory = null; loadConfig(); };
     document.querySelector('#saveConfig').onclick = saveConfig;
-    if (window.personaDesktop) loadConfig();
+    if (window.personaDesktop) { loadConfig(); loadQuestions(); }
 
 
     if (window.personaDesktop) {
