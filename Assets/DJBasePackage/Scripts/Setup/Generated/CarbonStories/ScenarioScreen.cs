@@ -94,6 +94,8 @@ namespace CarbonStories
         private PersonaData _personaData;
         private Option _selectedOption;
         private OptionRef _selectedOptionRef;
+        private readonly Option[] _displayedOptions = new Option[3];
+        private readonly int[] _sourceOptionIndices = new int[3];
         private int _currentQuestionIndex;
         private bool _optionVideoPlaying;
         private int _optionCanvasTweenId = -1;
@@ -205,9 +207,20 @@ namespace CarbonStories
         {
             StopOptionVideo();
             ScenarioData scenario = _personaData.scenarios[_currentQuestionIndex];
-            option1.SetContent(scenario.option1);
-            option2.SetContent(scenario.option2);
-            option3.SetContent(scenario.option3);
+            _displayedOptions[0] = scenario.option1;
+            _displayedOptions[1] = scenario.option2;
+            _displayedOptions[2] = scenario.option3;
+            for (int i = 0; i < _sourceOptionIndices.Length; i++)
+                _sourceOptionIndices[i] = i + 1;
+            for (int i = _displayedOptions.Length - 1; i > 0; i--)
+            {
+                int j = UnityEngine.Random.Range(0, i + 1);
+                (_displayedOptions[i], _displayedOptions[j]) = (_displayedOptions[j], _displayedOptions[i]);
+                (_sourceOptionIndices[i], _sourceOptionIndices[j]) = (_sourceOptionIndices[j], _sourceOptionIndices[i]);
+            }
+            option1.SetContent(_displayedOptions[0]);
+            option2.SetContent(_displayedOptions[1]);
+            option3.SetContent(_displayedOptions[2]);
             SetOptionsVisible(true);
             _remainingSeconds = App.Instance.Configuration.questionWaitTime;
             UpdateTimerText();
@@ -228,11 +241,8 @@ namespace CarbonStories
         {
             if (!_timerRunning || _answerConfirmed || _advancing)
                 return;
-            ScenarioData scenario = personaLoader.Personas[App.Instance.ActivePersona]
-                .scenarios[_currentQuestionIndex];
-            _selectedOption = index == 1 ? scenario.option1 :
-                index == 2 ? scenario.option2 :
-                index == 3 ? scenario.option3 : null;
+            _selectedOption = index >= 1 && index <= _displayedOptions.Length
+                ? _displayedOptions[index - 1] : null;
 
             _selectedOptionRef = index == 1 ? option1:
                 index == 2 ? option2 :
@@ -300,6 +310,16 @@ namespace CarbonStories
             UpdateScoreText();
             confirmationPopup.Hide();
             _selectedOptionRef.highlightImage.color = _selectedOption.scoreColor;
+            int bestIndex = 0;
+            for (int i = 1; i < _displayedOptions.Length; i++)
+                if (_displayedOptions[i].score > _displayedOptions[bestIndex].score)
+                    bestIndex = i;
+            if (_selectedOption.score < _displayedOptions[bestIndex].score)
+            {
+                OptionRef bestRef = bestIndex == 0 ? option1 : bestIndex == 1 ? option2 : option3;
+                bestRef.highlightImage.enabled = true;
+                bestRef.highlightImage.color = _displayedOptions[bestIndex].scoreColor;
+            }
 
             ShowConfirmedScore();
         }
@@ -309,7 +329,8 @@ namespace CarbonStories
             string path = _selectedOption.optionVideoPath;
             if (string.IsNullOrWhiteSpace(path))
             {
-                int optionIndex = _selectedOptionRef == option1 ? 1 : _selectedOptionRef == option2 ? 2 : 3;
+                int displayedIndex = _selectedOptionRef == option1 ? 0 : _selectedOptionRef == option2 ? 1 : 2;
+                int optionIndex = _sourceOptionIndices[displayedIndex];
                 int scenarioNumber = _personaData.scenarios[_currentQuestionIndex].number;
                 path = $"Personas/{App.Instance.ActivePersona.ToString().ToLowerInvariant()}/scenarios/{scenarioNumber}/optionVideos/{optionIndex}.mp4";
             }
