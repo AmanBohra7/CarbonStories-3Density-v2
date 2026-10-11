@@ -406,13 +406,12 @@
     }
 
     function newQuestion() {
-      return { question: '', options: ['', '', '', ''] };
+      return { question: '' };
     }
 
     function normalizeQuestion(value) {
       const source = value && typeof value === 'object' ? value : {};
-      const options = Array.isArray(source.options) ? source.options : [];
-      return { question: String(source.question ?? ''), options: Array.from({ length: 4 }, (_, index) => String(options[index] ?? '')) };
+      return { question: String(source.question ?? '') };
     }
 
     function newScenario() {
@@ -851,12 +850,6 @@
         });
         card.append(heading, remove,
           field('Question', item.question, value => { item.question = value; setQuestionsDirty(); }, { multiline: true, rows: 3 }));
-        for (let optionIndex = 0; optionIndex < 4; optionIndex++) {
-          card.append(field(`Option ${optionIndex + 1}`, item.options[optionIndex], value => {
-            item.options[optionIndex] = value;
-            setQuestionsDirty();
-          }));
-        }
         container.append(card);
       });
     }

@@ -8,7 +8,6 @@ namespace CarbonStories
     public class QuestionData
     {
         [TextArea] public string question;
-        public string[] options = new string[4];
     }
 
     [Serializable]

@@ -14,8 +14,7 @@ namespace CarbonStories
         [SerializeField] private GameObject animatedPanel;
         [SerializeField] private TextMeshProUGUI questionText;
         [SerializeField] private TextMeshProUGUI progressText;
-        [SerializeField] private TextMeshProUGUI[] optionTexts = new TextMeshProUGUI[4];
-        [SerializeField] private UnityEngine.UI.Button[] optionButtons = new UnityEngine.UI.Button[4];
+        [SerializeField] private UnityEngine.UI.Button[] ratingButtons = new UnityEngine.UI.Button[10];
         [SerializeField, InspectorName("Continue Button")] private UnityEngine.UI.Button nextButton;
         [SerializeField] private Color defaultColor = Color.white;
         [SerializeField] private Color highlightColor = new Color(0.96f, 0.7f, 0.14f, 1f);
@@ -25,7 +24,7 @@ namespace CarbonStories
         private readonly List<int> answers = new List<int>();
         private List<QuestionData> questions;
         private int questionIndex;
-        private int selectedOption = -1;
+        private int selectedRating;
         private bool completed;
         private bool acceptingQuestions;
 
@@ -38,13 +37,13 @@ namespace CarbonStories
             base.Awake();
             if (progressText != null)
                 progressText.gameObject.SetActive(false);
-            for (int i = 0; i < 4 && i < optionButtons.Length; i++)
+            for (int i = 0; i < 10 && i < ratingButtons.Length; i++)
             {
-                int optionIndex = i;
-                if (optionButtons[i] != null)
+                int rating = i + 1;
+                if (ratingButtons[i] != null)
                 {
-                    optionButtons[i].transition = UnityEngine.UI.Selectable.Transition.None;
-                    optionButtons[i].onClick.AddListener(() => SelectOption(optionIndex));
+                    ratingButtons[i].transition = UnityEngine.UI.Selectable.Transition.None;
+                    ratingButtons[i].onClick.AddListener(() => SelectRating(rating));
                 }
             }
         }
@@ -75,42 +74,34 @@ namespace CarbonStories
             QuestionData current = questions[questionIndex];
             if (questionText != null)
                 questionText.text = $"Question {questionIndex + 1} :\n{current?.question ?? string.Empty}";
-            selectedOption = -1;
+            selectedRating = 0;
             if (nextButton != null) nextButton.interactable = false;
-            for (int i = 0; i < 4; i++)
-            {
-                string option = current?.options != null && i < current.options.Length
-                    ? current.options[i] : string.Empty;
-                if (i < optionTexts.Length && optionTexts[i] != null) optionTexts[i].text = option;
-                if (i < optionButtons.Length && optionButtons[i] != null)
-                    optionButtons[i].interactable = !string.IsNullOrWhiteSpace(option);
-            }
-            UpdateOptionColors();
+            for (int i = 0; i < ratingButtons.Length; i++)
+                if (ratingButtons[i] != null) ratingButtons[i].interactable = i < 10;
+            UpdateRatingColors();
             if (animatedPanel != null) animatedPanel.SetActive(true);
         }
 
-        public void SelectOption(int index)
+        public void SelectRating(int rating)
         {
-            if (!acceptingQuestions || completed || questions == null || index < 0 || index >= 4) return;
-            QuestionData current = questions[questionIndex];
-            if (current?.options == null || index >= current.options.Length ||
-                string.IsNullOrWhiteSpace(current.options[index])) return;
-            selectedOption = index;
+            if (!acceptingQuestions || completed || questions == null || rating < 1 || rating > 10 ||
+                ratingButtons == null || rating > ratingButtons.Length || ratingButtons[rating - 1] == null) return;
+            selectedRating = rating;
             if (nextButton != null) nextButton.interactable = true;
-            UpdateOptionColors();
+            UpdateRatingColors();
         }
 
-        private void UpdateOptionColors()
+        private void UpdateRatingColors()
         {
-            for (int i = 0; i < optionButtons.Length; i++)
-                if (optionButtons[i] != null && optionButtons[i].targetGraphic != null)
-                    optionButtons[i].targetGraphic.color = i == selectedOption ? highlightColor : defaultColor;
+            for (int i = 0; i < ratingButtons.Length; i++)
+                if (ratingButtons[i] != null && ratingButtons[i].targetGraphic != null)
+                    ratingButtons[i].targetGraphic.color = i + 1 == selectedRating ? highlightColor : defaultColor;
         }
 
         public void SubmitAnswer()
         {
-            if (!acceptingQuestions || completed || questions == null || selectedOption < 0) return;
-            answers.Add(selectedOption);
+            if (!acceptingQuestions || completed || questions == null || selectedRating == 0) return;
+            answers.Add(selectedRating);
             questionIndex++;
             if (questionIndex < questions.Count) ShowCurrentQuestion();
             else CompleteQuestions();
@@ -132,14 +123,14 @@ namespace CarbonStories
             answers.Clear();
             questions = null;
             questionIndex = 0;
-            selectedOption = -1;
+            selectedRating = 0;
             completed = false;
             if (questionText != null) questionText.text = string.Empty;
             if (progressText != null) progressText.text = string.Empty;
             if (nextButton != null) nextButton.interactable = false;
-            for (int i = 0; i < optionButtons.Length; i++)
-                if (optionButtons[i] != null) optionButtons[i].interactable = false;
-            UpdateOptionColors();
+            for (int i = 0; i < ratingButtons.Length; i++)
+                if (ratingButtons[i] != null) ratingButtons[i].interactable = false;
+            UpdateRatingColors();
         }
 
         protected override void OnLoadingCompleted() { }
