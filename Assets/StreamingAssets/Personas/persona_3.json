@@ -29,7 +29,8 @@
       "number": 1,
       "question": "How will you travel today?",
       "hint": "Consider the carbon impact of each choice.",
-      "questionVideoPath": "Personas/persona_3/scenarios/1/videos/question_video.mp4",
+      "scenario_avatar_intro_video": "Personas/persona_3/scenarios/1/Scenario A.mp4",
+      "content_loop_video": "Personas/persona_3/scenarios/1/videos/question_video.mp4",
       "option1": {
         "icon": "Personas/persona_3/scenarios/1/icons/1.png",
         "videoPath": "Personas/persona_3/scenarios/1/videos/Scenario 1 A.mp4",

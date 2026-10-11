@@ -28,7 +28,8 @@ namespace CarbonStories
         public int number;
         public string question;
         public string hint;
-        public string questionVideoPath;
+        public string scenario_avatar_intro_video;
+        public string content_loop_video;
         public Option option1;
         public Option option2;  
         public Option option3;  
@@ -97,6 +98,7 @@ namespace CarbonStories
         private readonly Option[] _displayedOptions = new Option[3];
         private readonly int[] _sourceOptionIndices = new int[3];
         private int _currentQuestionIndex;
+        private bool _playingQuestionVideo;
         private bool _optionVideoPlaying;
         private int _optionCanvasTweenId = -1;
         private float _remainingSeconds;
@@ -185,6 +187,8 @@ namespace CarbonStories
             mediaPlayer.OnVideoEnded -= OnVideoEnded;
             mediaPlayer.OnVideoFailed -= OnVideoEnded;
             mediaPlayer.OnVideoStarted -= OnAnswerVideoStarted;
+            mediaPlayer.OnVideoEnded -= OnQuestionVideoEnded;
+            mediaPlayer.OnVideoFailed -= OnQuestionVideoEnded;
             mediaPlayer.Stop();
             StopOptionVideo();
             _selectedOption = null;
@@ -198,8 +202,29 @@ namespace CarbonStories
             animatedPanelCG.alpha = 1;
             animatedPanel.SetActive(true);
 
-            if (questionMediaPlayer != null && !string.IsNullOrWhiteSpace(scenario.questionVideoPath))
-                questionMediaPlayer.PlayVideo(scenario.questionVideoPath, true);
+            if (questionMediaPlayer != null && !string.IsNullOrWhiteSpace(scenario.content_loop_video))
+                questionMediaPlayer.PlayVideo(scenario.content_loop_video, true);
+
+            _playingQuestionVideo = !string.IsNullOrWhiteSpace(scenario.scenario_avatar_intro_video);
+            if (_playingQuestionVideo)
+            {
+                mediaPlayer.OnVideoEnded += OnQuestionVideoEnded;
+                mediaPlayer.OnVideoFailed += OnQuestionVideoEnded;
+                mediaPlayer.PlayVideo(scenario.scenario_avatar_intro_video);
+            }
+            else
+            {
+                ShowOptions();
+            }
+        }
+
+        private void OnQuestionVideoEnded()
+        {
+            if (!_playingQuestionVideo)
+                return;
+            _playingQuestionVideo = false;
+            mediaPlayer.OnVideoEnded -= OnQuestionVideoEnded;
+            mediaPlayer.OnVideoFailed -= OnQuestionVideoEnded;
             ShowOptions();
         }
 
@@ -239,7 +264,7 @@ namespace CarbonStories
 
         public void OnOptionSelected(int index)
         {
-            if (!_timerRunning || _answerConfirmed || _advancing)
+            if (_playingQuestionVideo || !_timerRunning || _answerConfirmed || _advancing)
                 return;
             _selectedOption = index >= 1 && index <= _displayedOptions.Length
                 ? _displayedOptions[index - 1] : null;
@@ -451,16 +476,21 @@ namespace CarbonStories
         protected override void OnReset()
         {
             _timerRunning = false;
+            _playingQuestionVideo = false;
             App.Instance.SetScenarioTimerAudio(false);
+            mediaPlayer.OnVideoEnded -= OnQuestionVideoEnded;
+            mediaPlayer.OnVideoFailed -= OnQuestionVideoEnded;
+            mediaPlayer.Stop();
             StopOptionVideo();
-            if (questionMediaPlayer != null)
-                questionMediaPlayer.Stop();
         }
 
         protected override void OnUnloadingStarted(ScreenLoadingInfo info)
         {
             _timerRunning = false;
+            _playingQuestionVideo = false;
             App.Instance.SetScenarioTimerAudio(false);
+            mediaPlayer.OnVideoEnded -= OnQuestionVideoEnded;
+            mediaPlayer.OnVideoFailed -= OnQuestionVideoEnded;
             if (questionMediaPlayer != null)
                 questionMediaPlayer.Stop();
             mediaPlayer.OnVideoEnded -= OnVideoEnded;
