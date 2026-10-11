@@ -4,6 +4,8 @@ The app remembers the last selected StreamingAssets folder containing Personas. 
 
 Entry and exit questions are shared across all personas. Edit them in the **Questions** tab; the CMS saves them to `StreamingAssets/questions.json`. Persona JSON files contain only persona-specific content.
 
+Keep each entry and exit question list in the same order as its StampIQ pre/post questionnaire. Unity displays the local text and pairs each rating with the server question ID at the same list position. A count or rating-range mismatch is logged and the game continues without submitting that questionnaire.
+
 Unity ignores this development folder because its name ends in `~`. Keep that suffix so `node_modules` are excluded from Unity import and builds. The packaged app is built directly into `Assets/StreamingAssets/dist`, which Unity includes in game builds.
 
 Development (run commands from `Assets/App/PersonaEditorElectron~`):

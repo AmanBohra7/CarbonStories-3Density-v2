@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace CarbonStories
         public bool success;
         public string message;
         public string error_code;
+        [JsonIgnore] public long httpStatus;
         public T data;
         public StampIqDetails details;
     }
@@ -20,6 +22,27 @@ namespace CarbonStories
     [Serializable] public sealed class StampIqDetails { public string status; public string next_action; }
     [Serializable] public sealed class StampIqGameConfig { public bool pre_questionnaire_enabled; public bool post_questionnaire_enabled; }
     [Serializable] public sealed class StampIqValidation { public string scan_token; }
+    [Serializable] public sealed class StampIqRatingQuestion
+    {
+        public int id;
+        public int min;
+        public int max;
+        public bool required;
+    }
+    [Serializable] public sealed class StampIqQuestionnaire
+    {
+        public string phase;
+        public List<StampIqRatingQuestion> questions;
+    }
+    [Serializable] public sealed class StampIqRatingAnswer
+    {
+        public int question_id;
+        public int answer;
+    }
+    [Serializable] public sealed class StampIqAnswerPayload
+    {
+        public List<StampIqRatingAnswer> answers;
+    }
     [Serializable] public sealed class StampIqSession
     {
         public string session_id;
@@ -68,6 +91,13 @@ namespace CarbonStories
         public IEnumerator Start(string id, Action<StampIqReply<StampIqSession>> done) =>
             Send("POST", SessionPath(id) + "/start", null, done);
 
+        public IEnumerator GetQuestionnaire(string id, bool post, Action<StampIqReply<StampIqQuestionnaire>> done) =>
+            Send("GET", SessionPath(id) + (post ? "/post-questionnaire" : "/pre-questionnaire"), null, done);
+
+        public IEnumerator SubmitQuestionnaire(string id, bool post, StampIqAnswerPayload answers,
+            Action<StampIqReply<StampIqSession>> done) =>
+            Send("POST", SessionPath(id) + (post ? "/post-questionnaire" : "/pre-questionnaire"), answers, done);
+
         public IEnumerator SubmitResult(string id, object result, Action<StampIqReply<StampIqSession>> done) =>
             Send("POST", SessionPath(id) + "/result", result, done);
 
@@ -102,6 +132,7 @@ namespace CarbonStories
                     StampIqReply<T> reply = null;
                     try { reply = JsonConvert.DeserializeObject<StampIqReply<T>>(request.downloadHandler.text); }
                     catch (JsonException) { /* Non-JSON network or proxy response. */ }
+                    if (reply != null) reply.httpStatus = request.responseCode;
                     if (request.result == UnityWebRequest.Result.Success && reply != null && reply.success)
                     {
                         done(reply);
@@ -116,6 +147,7 @@ namespace CarbonStories
                     }
                     done(reply ?? new StampIqReply<T>
                     {
+                        httpStatus = request.responseCode,
                         error_code = transient ? "NETWORK_ERROR" : "API_ERROR",
                         message = transient ? "Connection to StampIQ failed. Please try again." : "StampIQ returned an unreadable response."
                     });

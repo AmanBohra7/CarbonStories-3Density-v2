@@ -4,6 +4,7 @@ namespace CarbonStories
 {
     public class ExitQuestionScreen : PersonaQuestionScreen
     {
+        protected override bool IsPostQuestionnaire => true;
         protected override List<QuestionData> GetQuestions(SharedQuestionData data) => data.exitQuestions;
     }
 }

@@ -53,6 +53,14 @@ namespace CarbonStories
                 return;
             }
 
+            if (_currentScreen != newScreen && _currentScreen != null &&
+                Screens.ContainsKey(_currentScreen) &&
+                Screens[_currentScreen] is ResultScreen resultScreen && !resultScreen.ResultHandled)
+            {
+                resultScreen.SubmitBeforeLeaving(() => UpdateCurrentScreen(newScreen, onComplete));
+                return;
+            }
+
             _inTransition = true;
             _lastScreen = _currentScreen;
             StartCoroutine(ProcessUpdateScreen(_lastScreen, newScreen, (oldScreen, updatedNewScreen) =>

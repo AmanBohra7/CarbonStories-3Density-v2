@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using Lean.Transition;
 using TMPro;
 using UnityEngine;
@@ -17,9 +19,15 @@ namespace CarbonStories
         [SerializeField] private TextMeshProUGUI gradeText;
         [SerializeField] private TextMeshProUGUI descriptionText;
         [SerializeField] private UnityEngine.UI.Button continueButton;
-        private bool resultSynchronized;
+        private bool resultHandled;
         private bool resultBusy;
         private string resultDescription;
+        private string scoreImage;
+        private bool resultVideoReady;
+        private bool resultInitialized;
+        private Action leaveAfterSubmission;
+
+        public bool ResultHandled => resultHandled;
 
         [Header("Media")]
         [SerializeField] private CustomMediaPlayer customMediaPlayer;
@@ -30,45 +38,141 @@ namespace CarbonStories
 
         protected override void OnLoadingStarted(ScreenLoadingInfo info)
         {
+            resultHandled = false;
+            resultBusy = false;
+            resultInitialized = false;
+            scoreImage = null;
+            leaveAfterSubmission = null;
+            if (continueButton != null) continueButton.interactable = true;
             StartCoroutine(InitializeScreen(info));
         }
 
-        private System.Collections.IEnumerator InitializeScreen(ScreenLoadingInfo info)
+        private IEnumerator InitializeScreen(ScreenLoadingInfo info)
         {
             yield return App.Instance.LoadConfiguration();
             customMediaPlayer?.Stop();
+            if (customMediaPlayer != null)
+            {
+                customMediaPlayer.OnVideoStarted -= OnResultVideoReady;
+                customMediaPlayer.OnVideoFailed -= OnResultVideoReady;
+                customMediaPlayer.OnVideoStarted += OnResultVideoReady;
+                customMediaPlayer.OnVideoFailed += OnResultVideoReady;
+            }
             UpdateResults();
             loadIn.BeginAllTransitions();
-            resultSynchronized = false;
-            SubmitResult();
+            resultInitialized = true;
         }
 
-        private void SubmitResult()
+        public void SubmitBeforeLeaving(Action onSubmitted)
         {
-            if (resultBusy) return;
+            if (resultHandled)
+            {
+                onSubmitted?.Invoke();
+                return;
+            }
+
+            if (leaveAfterSubmission == null) leaveAfterSubmission = onSubmitted;
+            SubmitResult(true);
+        }
+
+        private IEnumerator SubmitAfterThreeMinutes()
+        {
+            float videoDeadline = Time.realtimeSinceStartup + 10f;
+            yield return new WaitUntil(() => resultInitialized &&
+                (resultVideoReady || Time.realtimeSinceStartup >= videoDeadline));
+            yield return new WaitForEndOfFrame();
+            yield return new WaitForSecondsRealtime(180f);
+            if (!resultHandled) SubmitResult();
+        }
+
+        private void SubmitResult(bool leavingNow = false)
+        {
+            if (resultBusy || resultHandled) return;
             resultBusy = true;
+            StartCoroutine(CaptureAndSubmitResult(leavingNow));
+        }
+
+        private IEnumerator CaptureAndSubmitResult(bool leavingNow)
+        {
+            if (scoreImage == null)
+            {
+                // The score screen fade and the result video's first frame must be visible.
+                float videoDeadline = Time.realtimeSinceStartup + 10f;
+                yield return new WaitUntil(() => resultInitialized && currentState == DJScreenState.LOADED &&
+                    (leavingNow || resultVideoReady || Time.realtimeSinceStartup >= videoDeadline));
+                if (descriptionText != null) descriptionText.text = resultDescription;
+                yield return new WaitForEndOfFrame();
+                try
+                {
+                    scoreImage = CaptureScoreImage();
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError("Could not capture the result screen: " + exception, this);
+                    App.Instance.LogResultFailure("capture", "CAPTURE_FAILED", exception.Message);
+                    // The image is optional; still submit the score if capture failed.
+                }
+            }
+
             if (continueButton != null) continueButton.interactable = false;
             if (descriptionText != null) descriptionText.text = resultDescription + "\nSaving your result...";
-            App.Instance.SubmitResultAndComplete((success, error) =>
+            App.Instance.SubmitGameResult(scoreImage, (_, __) =>
             {
                 resultBusy = false;
-                resultSynchronized = success;
+                resultHandled = true;
                 if (continueButton != null) continueButton.interactable = true;
-                if (descriptionText != null)
-                    descriptionText.text = success ? resultDescription :
-                        resultDescription + "\n" + error + " Tap the button to retry.";
+                if (descriptionText != null) descriptionText.text = resultDescription;
+                Action onSubmitted = leaveAfterSubmission;
+                leaveAfterSubmission = null;
+                onSubmitted?.Invoke();
             });
+        }
+
+        private void OnResultVideoReady() => resultVideoReady = true;
+
+        private static string CaptureScoreImage()
+        {
+            const int maxWidth = 1280;
+            const int maxBytes = 5 * 1024 * 1024;
+            Texture2D screenshot = ScreenCapture.CaptureScreenshotAsTexture();
+            if (screenshot == null) throw new InvalidOperationException("Screen capture returned no image.");
+
+            Texture2D resized = null;
+            RenderTexture target = null;
+            RenderTexture previous = RenderTexture.active;
+            try
+            {
+                Texture2D image = screenshot;
+                if (screenshot.width > maxWidth)
+                {
+                    int height = Mathf.Max(1, Mathf.RoundToInt((float)screenshot.height * maxWidth / screenshot.width));
+                    target = RenderTexture.GetTemporary(maxWidth, height, 0);
+                    Graphics.Blit(screenshot, target);
+                    RenderTexture.active = target;
+                    resized = new Texture2D(maxWidth, height, TextureFormat.RGB24, false);
+                    resized.ReadPixels(new Rect(0, 0, maxWidth, height), 0, 0);
+                    resized.Apply();
+                    image = resized;
+                }
+
+                byte[] jpg = image.EncodeToJPG(80);
+                if (jpg.Length > maxBytes) jpg = image.EncodeToJPG(60);
+                if (jpg.Length > maxBytes) throw new InvalidOperationException("Result screen image exceeds the 5 MB API limit.");
+                return "data:image/jpeg;base64," + Convert.ToBase64String(jpg);
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                if (target != null) RenderTexture.ReleaseTemporary(target);
+                if (resized != null) UnityEngine.Object.Destroy(resized);
+                UnityEngine.Object.Destroy(screenshot);
+            }
         }
 
         public void OnContinuePressed()
         {
-            if (resultBusy) return;
-            if (resultSynchronized)
-            {
-                if (continueButton != null) continueButton.interactable = false;
-                App.Instance.GoToExitQuestionScreen();
-            }
-            else SubmitResult();
+            if (continueButton != null) continueButton.interactable = false;
+            App.Instance.GoToExitQuestionScreen();
         }
 
         private void UpdateResults()
@@ -114,6 +218,7 @@ namespace CarbonStories
             if (customMediaPlayer != null)
             {
                 string videoPath = App.Instance.Configuration.ResultVideo(gradeIndex);
+                resultVideoReady = string.IsNullOrWhiteSpace(videoPath);
                 if (string.IsNullOrWhiteSpace(videoPath))
                 {
                     customMediaPlayer.Stop();
@@ -124,7 +229,10 @@ namespace CarbonStories
                 }
             }
             else
+            {
+                resultVideoReady = true;
                 Debug.LogWarning("ResultScreen has no CustomMediaPlayer assigned.", this);
+            }
         }
 
         private static ScenarioAnswerResult GetAnswer(UserResult result, int index)
@@ -136,16 +244,27 @@ namespace CarbonStories
 
         protected override void OnLoadingCompleted()
         {
+            StartCoroutine(SubmitAfterThreeMinutes());
         }
 
         protected override void OnReset()
         {
+            if (customMediaPlayer != null)
+            {
+                customMediaPlayer.OnVideoStarted -= OnResultVideoReady;
+                customMediaPlayer.OnVideoFailed -= OnResultVideoReady;
+            }
             customMediaPlayer?.Stop();
         }
 
         protected override void OnUnloadingStarted(ScreenLoadingInfo info)
         {
             StopAllCoroutines();
+            if (customMediaPlayer != null)
+            {
+                customMediaPlayer.OnVideoStarted -= OnResultVideoReady;
+                customMediaPlayer.OnVideoFailed -= OnResultVideoReady;
+            }
             customMediaPlayer?.Stop();
             loadOut.BeginAllTransitions();
         }

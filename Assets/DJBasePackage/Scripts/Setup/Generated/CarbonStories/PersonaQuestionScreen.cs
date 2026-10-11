@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Lean.Transition;
 using TMPro;
@@ -31,6 +32,7 @@ namespace CarbonStories
         public IReadOnlyList<int> Answers => answers;
 
         protected abstract List<QuestionData> GetQuestions(SharedQuestionData data);
+        protected virtual bool IsPostQuestionnaire => false;
 
         protected override void Awake()
         {
@@ -53,16 +55,28 @@ namespace CarbonStories
             ResetQuestions();
             acceptingQuestions = true;
             loadIn.BeginAllTransitions();
-            StartCoroutine(ConfigurationReader.Load<SharedQuestionData>("questions.json", ShowQuestions));
+            StartCoroutine(LoadQuestions());
+        }
+
+        private IEnumerator LoadQuestions()
+        {
+            yield return ConfigurationReader.Load<SharedQuestionData>("questions.json", ShowQuestions);
+            if (acceptingQuestions && questions == null)
+            {
+                Debug.LogWarning($"{GetType().Name} could not load questions.json.", this);
+                questions = new List<QuestionData>();
+                CompleteQuestions();
+            }
         }
 
         private void ShowQuestions(SharedQuestionData data)
         {
             if (!acceptingQuestions) return;
-            questions = GetQuestions(data);
-            if (questions == null || questions.Count == 0)
+            questions = data != null ? GetQuestions(data) ?? new List<QuestionData>() : new List<QuestionData>();
+            if (questions.Count == 0)
             {
                 Debug.LogWarning($"{GetType().Name} has no questions in questions.json.", this);
+                CompleteQuestions();
                 return;
             }
             ShowCurrentQuestion();
@@ -111,9 +125,14 @@ namespace CarbonStories
         {
             if (completed) return;
             completed = true;
-            onQuestionsCompleted?.Invoke();
-            if (screenAfterQuestions != null)
-                App.Instance.LoadScreen(screenAfterQuestions);
+            if (nextButton != null) nextButton.interactable = false;
+            App.Instance.SubmitQuestionnaire(IsPostQuestionnaire, questions, answers, () =>
+            {
+                if (!acceptingQuestions) return;
+                onQuestionsCompleted?.Invoke();
+                if (screenAfterQuestions != null)
+                    App.Instance.LoadScreen(screenAfterQuestions);
+            });
         }
 
         private void ResetQuestions()
