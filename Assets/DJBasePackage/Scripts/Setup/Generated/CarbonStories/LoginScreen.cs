@@ -90,7 +90,9 @@ namespace CarbonStories
 
         protected override void OnLoadingCompleted()
         {
+#if !UNITY_STANDALONE_WIN || UNITY_EDITOR
             StartCoroutine(FocusInputNextFrame());
+#endif
         }
 
         private IEnumerator FocusInputNextFrame()
