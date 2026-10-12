@@ -365,6 +365,11 @@ namespace CarbonStories
         private IEnumerator SubmitQuestionnaireRoutine(bool post, List<QuestionData> localQuestions,
             IReadOnlyList<int> ratings, Action done)
         {
+            if (post && !postQuestionnaireEnabled)
+            {
+                done?.Invoke();
+                yield break;
+            }
             string stage = post ? "post_questionnaire" : "pre_questionnaire";
             string expectedAction = post ? "submit_post_questionnaire" : "submit_pre_questionnaire";
             bool enabled = post ? postQuestionnaireEnabled : preQuestionnaireEnabled;
@@ -412,15 +417,7 @@ namespace CarbonStories
             {
                 if (stampIqNextAction == "complete")
                 {
-                    StampIqReply<StampIqSession> completion = null;
-                    yield return stampIq.Complete(stampIqSessionId, reply => completion = reply);
-                    if (completion != null && completion.success)
-                    {
-                        stampIqSessionId = null;
-                        stampIqNextAction = null;
-                        pendingResult = null;
-                    }
-                    else LogResultFailure("complete", completion);
+                    yield return CompleteSessionRoutine();
                 }
                 else LogResultFailure("complete", "UNEXPECTED_STATE", "StampIQ expects " + stampIqNextAction + ".");
             }
@@ -549,8 +546,23 @@ namespace CarbonStories
                 done(false, "StampIQ is not ready for the result.");
                 yield break;
             }
+            if (stampIqNextAction == "complete" && !postQuestionnaireEnabled)
+                yield return CompleteSessionRoutine();
             apiBusy = false;
             done(true, null);
+        }
+
+        private IEnumerator CompleteSessionRoutine()
+        {
+            StampIqReply<StampIqSession> completion = null;
+            yield return stampIq.Complete(stampIqSessionId, reply => completion = reply);
+            if (completion != null && completion.success)
+            {
+                stampIqSessionId = null;
+                stampIqNextAction = null;
+                pendingResult = null;
+            }
+            else LogResultFailure("complete", completion);
         }
 
         public void RestartApplication()
