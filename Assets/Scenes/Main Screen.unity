@@ -29366,7 +29366,6 @@ MonoBehaviour:
   - {fileID: 1608290682}
   keyboardPrefab: {fileID: 2452114811308096172, guid: c216c4fb684db134c9cdf8441b831f9f, type: 3}
   keyboardScale: 1.05
-  keyboardWidthMultiplier: 1.8
   keyboardBottomPadding: 24
   showFullKeyboard: 0
   onCodeChanged:

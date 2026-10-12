@@ -14,7 +14,6 @@ public class FiveDigitCodeInput : MonoBehaviour
     [SerializeField] private TextMeshProUGUI[] digits = new TextMeshProUGUI[5];
     [SerializeField] private KeyboardScript keyboardPrefab;
     [SerializeField, Range(0.5f, 4f)] private float keyboardScale = 1.05f;
-    [SerializeField, Range(1f, 2f)] private float keyboardWidthMultiplier = 1.8f;
     [SerializeField] private float keyboardBottomPadding = 24f;
     [SerializeField] private bool showFullKeyboard;
     [SerializeField] private UnityEvent<string> onCodeChanged = new UnityEvent<string>();
@@ -112,8 +111,7 @@ public class FiveDigitCodeInput : MonoBehaviour
                 keyboard.gameObject.AddComponent<GraphicRaycaster>();
         }
 
-        keyboard.transform.localScale = new Vector3(
-            keyboardScale * (showFullKeyboard ? 1f : keyboardWidthMultiplier), keyboardScale, 1f);
+        keyboard.transform.localScale = Vector3.one * keyboardScale;
         keyboard.SetNewInputField(inputField);
         keyboard.EngLayoutBig.SetActive(showFullKeyboard);
         keyboard.EngLayoutSml.SetActive(false);
